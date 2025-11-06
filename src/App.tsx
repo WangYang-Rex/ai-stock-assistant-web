@@ -1,35 +1,42 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.less'
+import { useLocation } from 'react-router-dom';
+import Routers from '@/router'
+import NewHeader from '@/components/newheader/NewHeader';
+import LeftNewNav from '@/components/leftnav/LeftNewNav';
 
-function App() {
-  const [count, setCount] = useState(0)
+/**
+ * 主体
+ */
+const App = (props: any) => {
+  const location = useLocation();
+  const { pathname, hash } = location;
+  const filterRouter = ['login'];
+  const includesRouter = filterRouter.filter(v => {
+    return pathname.includes(v);
+  });
+  console.log('App render')
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  let appContent: any = null;
+  if (includesRouter.length) {
+    appContent = (
+      <div className="pageMain t-FBH">
+        <Routers />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+    );
+  } else {
+    appContent = (
+      <div className="pageMain-wrap t-FBV">
+        <NewHeader />
+        <div className="pageMain t-FBH" style={{ top: '56px' }}>
+          <LeftNewNav {...props} />
+          <div className="main-content t-FB1 t-FBV">
+            <Routers />
+          </div>
+        </div>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    );
+  }
+
+  return appContent
 }
 
 export default App

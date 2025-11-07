@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import type { MenuProps } from 'antd';
 import { Button, Menu } from 'antd';
 import {
+  FundProjectionScreenOutlined,
+  HomeOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
@@ -12,12 +14,19 @@ import './LeftNewNav.less';
 const menuMap = [
   {
     key: 'home',
-    label: '首页',
+    label: 'Home',
     route: '/',
+    icon: <HomeOutlined />,
+  },
+  {
+    key: 'stock',
+    label: 'Stock',
+    route: '/stock',
+    icon: <FundProjectionScreenOutlined />,
   },
   {
     key: 'vite',
-    label: 'vite',
+    label: 'Vite',
     route: '/vite',
   },
 ]
@@ -35,7 +44,7 @@ const LeftNewNav = (props: any) => {
     return {
       key: item.key,
       label: item.label,
-      icon: <SettingOutlined />,
+      icon: item.icon || <SettingOutlined />,
     }
   }).concat([{
     key: 'sub1',
@@ -63,7 +72,7 @@ const LeftNewNav = (props: any) => {
         className="t-FB1 menu-ctn"
         onClick={onClick}
         style={{ width: collapsed ? '70px' : '180px' }}
-        defaultSelectedKeys={['1']}
+        defaultSelectedKeys={['home']}
         defaultOpenKeys={['sub1']}
         mode="inline"
         inlineCollapsed={collapsed}

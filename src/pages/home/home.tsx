@@ -17,10 +17,10 @@ const Home = () => {
 
   const getStockList = async () => {
     const res = await stockApi.list();
-    debugger
     setStockList(res);
   };
 
+  const selectedStockRecord = stockList.find((_stock) => _stock.code === selectedStock) as Stock;
   return (
     <div className="homePage main p_12">
       <div className="stock-filter mb_12">
@@ -31,9 +31,9 @@ const Home = () => {
           onChange={(value: string) => {
             setSelectedStock(value);
           }}
-          options={[
-            { value: '588080', label: <span>科创50ETF</span> },
-          ]}
+          options={stockList.map((_stock) => {
+            return { value: _stock.code, label: <span>{_stock.name}</span> }
+          })}
         />
       </div>
       <div className="stock-content">
@@ -43,7 +43,9 @@ const Home = () => {
         </div>
         <div className="stock-section">
           <div className="stock-section-title">行情图</div>
-          <QuoteChart />
+          {selectedStockRecord && (
+          <QuoteChart stock={selectedStockRecord} />
+          )}
         </div>
         <div className="stock-section">
           <div className="stock-section-title">AI分析</div>

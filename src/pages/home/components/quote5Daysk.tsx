@@ -117,7 +117,7 @@ const Quote5Daysk = (props: { stock: Stock }) => {
 
   const getQuoteList = async () => {
     const today = new Date().toISOString().split('T')[0];
-    const fiveDaysAgo = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
+    const fiveDaysAgo = new Date(new Date().setDate(new Date().getDate() - 8)).toISOString().split('T')[0];
     const params = {
       code: stock.code,
       marketCode: stock.marketCode?.toString() || '',

@@ -257,5 +257,16 @@ export const quotesApi = {
   rankingsVolume: (data?: RankingsRequest): Promise<Quote[]> => {
     return post<Quote[]>("/api/quotes/rankings-volume", data || {});
   },
+
+  /**
+   * 同步股票快照
+   * 从外部API同步股票快照数据
+   */
+  syncStockQuotesFromAPI: (data: {
+    code: string;
+    marketCode: string;
+  }): Promise<boolean> => {
+    return post<boolean>("/api/quotes/syncStockQuotesFromAPI", data);
+  },
 };
 

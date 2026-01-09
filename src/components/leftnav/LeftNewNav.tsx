@@ -14,13 +14,19 @@ import './LeftNewNav.less';
 const menuMap = [
   {
     key: 'home',
-    label: 'Home',
+    label: '实时行情',
     route: '/',
     icon: <HomeOutlined />,
   },
   {
+    key: 'news',
+    label: '实时新闻',
+    route: '/stock',
+    icon: <HomeOutlined />,
+  },
+  {
     key: 'stock',
-    label: 'Stock',
+    label: '智能投顾',
     route: '/stock',
     icon: <FundProjectionScreenOutlined />,
   },

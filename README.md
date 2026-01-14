@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# AI Stock Assistant Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+智能股票助手 - 现代化 Fintech 投资分析平台
 
-Currently, two official plugins are available:
+## ✨ 特性
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📊 **实时行情** - 股票实时数据展示和走势图
+- 💹 **交易管理** - 交易记录的增删改查
+- 🤖 **AI 分析** - 智能投顾和市场分析
+- ☀️ **专业亮色主题** - 清爽的 Fintech Light Mode 设计
+- 📱 **响应式布局** - 适配各种屏幕尺寸
 
-## React Compiler
+## 🎨 设计系统
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+本项目采用专业 **Fintech Light Mode** 设计风格：
 
-## Expanding the ESLint configuration
+### 配色方案
+- **主色调**: Trust Blue (#3B82F6) - 传达信任和专业
+- **强调色**: Purple (#8B5CF6) - 用于次要元素
+- **成功/涨**: Emerald (#10B981) - 股票上涨指示
+- **警示/跌**: Red (#EF4444) - 股票下跌指示
+- **背景色**: Light (#F8FAFC) - 清爽的浅灰白
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 字体
+- **标题**: Poppins - 现代几何风格
+- **正文**: Open Sans - 高可读性
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### UI 组件
+- 卡片阴影和边框
+- 平滑的动画过渡
+- 悬停状态反馈
+- 装饰性蓝色指示条
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🛠️ 技术栈
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **框架**: React 18 + TypeScript
+- **构建工具**: Vite 7
+- **UI 组件库**: Ant Design 5
+- **样式**: Less + CSS Variables
+- **路由**: React Router v6
+- **图表**: ECharts
+
+## 📁 项目结构
+
+```
+src/
+├── @types/          # TypeScript 类型定义
+├── components/      # 可复用组件
+│   ├── leftnav/     # 左侧导航栏
+│   ├── newheader/   # 顶部导航栏
+│   └── markdownCmp/ # Markdown 渲染组件
+├── hooks/           # 自定义 Hooks
+├── images/          # 图片资源
+├── lib/             # 工具库和 API
+│   └── server/      # API 接口
+├── pages/           # 页面组件
+│   ├── home/        # 首页 - 实时行情
+│   ├── trade/       # 交易页面
+│   └── vite/        # Vite 示例页
+├── styles/          # 全局样式
+│   ├── variables.less  # 设计令牌变量
+│   ├── base.less       # 基础样式重置
+│   ├── app.less        # 应用布局和 Antd 覆盖
+│   └── components.less # 共享组件样式
+├── App.tsx          # 应用主组件
+├── main.tsx         # 入口文件
+└── router.tsx       # 路由配置
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 快速开始
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### 安装依赖
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 开发模式
+
+```bash
+npm run dev
+```
+
+访问 http://localhost:5173
+
+### 构建生产版本
+
+```bash
+npm run build
+```
+
+### 代码检查
+
+```bash
+npm run lint
+```
+
+### TypeScript 类型检查
+
+```bash
+npm run tsc
+```
+
+## 🎯 设计原则
+
+1. **Clean & Professional** - 简洁专业的设计风格
+2. **Data Dense** - 数据密集型布局，信息一目了然
+3. **Accessible** - 无障碍设计，高对比度文字
+4. **Performant** - 流畅动画，不影响性能
+5. **Consistent** - 统一的设计语言和交互模式
+
+## 📜 License
+
+Private

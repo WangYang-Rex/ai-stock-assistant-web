@@ -1,59 +1,323 @@
-.homePage{
-  .stock-content{
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
+/**
+ * ============================================
+ * Home Page Styles
+ * ============================================
+ * 首页 - 实时行情页面样式 (Light Mode)
+ */
 
-    .stock-section{
-      margin-bottom: 20px;
+@import '../../styles/variables.less';
 
-      .stock-section-title{
-        color: #000;
-        font-family: "PingFang HK";
-        font-size: 18px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: normal;
-        margin-bottom: 16px;
+.homePage {
+  padding: @spacing-lg;
+  min-height: 100%;
+  background: transparent;
+  animation: fadeIn 0.3s ease-out;
+
+  /* ============================================
+   * Stock Filter Section
+   * ============================================ */
+  .stock-filter {
+    display: flex;
+    align-items: center;
+    gap: @spacing-lg;
+    margin-bottom: @spacing-lg;
+
+    .filter-label {
+      font-size: @font-size-base;
+      font-weight: @font-weight-medium;
+      color: @color-text-secondary;
+    }
+  }
+
+  /* ============================================
+   * Stock Content Container
+   * ============================================ */
+  .stock-content {
+    background: @color-bg-elevated;
+    border: 1px solid @color-border;
+    border-radius: @radius-lg;
+    padding: @spacing-xl;
+    box-shadow: @shadow-card;
+
+    /* ============================================
+     * Stock Section
+     * ============================================ */
+    .stock-section {
+      margin-bottom: @spacing-2xl;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Section Title */
+      .stock-section-title {
+        font-family: @font-family-heading;
+        font-size: @font-size-lg;
+        font-weight: @font-weight-semibold;
+        color: @color-text-primary;
+        margin-bottom: @spacing-lg;
+        padding-bottom: @spacing-md;
+        border-bottom: 1px solid @color-border;
+        position: relative;
+
+        /* 装饰性下划线 */
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          width: 50px;
+          height: 2px;
+          background: @color-primary;
+          border-radius: @radius-full;
+        }
       }
     }
-    .stock-content-chart{
-      margin-top: 12px;
 
-      .ai-report-card-chart-container{
+    /* ============================================
+     * Chart Container
+     * ============================================ */
+    .stock-content-chart {
+      margin-top: @spacing-md;
+
+      .ai-report-card-chart-container {
         width: 100%;
-        height: 500px;
-        border: 1px solid #e8e8e8;
-        border-radius: 8px;
-        padding: 16px;
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        height: 600px;
+        background: @color-bg-elevated;
+        border: 1px solid @color-border;
+        border-radius: @radius-md;
+        padding: @spacing-lg;
+        box-shadow: @shadow-sm;
+        transition: all @transition-normal;
 
-        // 自定义滚动条
-        ::-webkit-scrollbar {
+        &:hover {
+          box-shadow: @shadow-md;
+        }
+
+        /* 自定义滚动条 */
+        &::-webkit-scrollbar {
           width: 6px;
           height: 6px;
         }
 
-        ::-webkit-scrollbar-thumb {
-          background: #d9d9d9;
-          border-radius: 3px;
+        &::-webkit-scrollbar-thumb {
+          background: @color-border-light;
+          border-radius: @radius-full;
 
           &:hover {
-            background: #bfbfbf;
+            background: @color-text-hint;
           }
         }
 
-        ::-webkit-scrollbar-track {
+        &::-webkit-scrollbar-track {
           background: transparent;
         }
       }
     }
-    .ai-sign-content{
+
+    /* ============================================
+     * AI Analysis Content
+     * ============================================ */
+    .ai-sign-content {
       width: 100%;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 20px;
+      background: @color-bg-surface;
+      border: 1px solid @color-border;
+      border-radius: @radius-md;
+      padding: @spacing-xl;
+      box-shadow: @shadow-sm;
+      transition: all @transition-normal;
+
+      /* 左侧装饰边框 */
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: @spacing-xl;
+        bottom: @spacing-xl;
+        width: 3px;
+        background: @color-primary;
+        border-radius: @radius-full;
+      }
+
+      &:hover {
+        box-shadow: @shadow-md;
+      }
+    }
+  }
+}
+
+/* ============================================
+ * Stock Table Component
+ * ============================================ */
+.stock-table-wrap {
+  .ant-table {
+    background: @color-bg-elevated;
+    border-radius: @radius-md;
+    overflow: hidden;
+
+    .ant-table-thead>tr>th {
+      background: @color-bg-surface;
+      border-bottom: 1px solid @color-border;
+
+      &:first-child {
+        border-top-left-radius: @radius-md;
+      }
+
+      &:last-child {
+        border-top-right-radius: @radius-md;
+      }
+    }
+
+    .ant-table-tbody>tr>td {
+      background: @color-bg-elevated;
+      border-bottom: 1px solid @color-border;
+    }
+
+    .ant-table-tbody>tr:hover>td {
+      background: @color-bg-surface;
+    }
+  }
+
+  /* Stock Name Column */
+  .stock-name {
+    font-weight: @font-weight-medium;
+    color: @color-text-primary;
+  }
+
+  .stock-code {
+    font-size: @font-size-sm;
+    color: @color-text-muted;
+    font-family: @font-family-mono;
+  }
+
+  /* Price Columns */
+  .price-up {
+    color: @color-danger;
+    font-weight: @font-weight-medium;
+    font-family: @font-family-mono;
+
+    &::before {
+      content: '↑ ';
+    }
+  }
+
+  .price-down {
+    color: @color-success;
+    font-weight: @font-weight-medium;
+    font-family: @font-family-mono;
+
+    &::before {
+      content: '↓ ';
+    }
+  }
+
+  .price-neutral {
+    color: @color-text-secondary;
+    font-family: @font-family-mono;
+  }
+}
+
+/* ============================================
+ * Quote Chart Component
+ * ============================================ */
+.quote-chart-wrapper {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-md;
+  padding: @spacing-lg;
+  min-height: 400px;
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: @spacing-lg;
+    padding-bottom: @spacing-md;
+    border-bottom: 1px solid @color-border;
+
+    .chart-title {
+      font-weight: @font-weight-semibold;
+      color: @color-text-primary;
+    }
+
+    .chart-actions {
+      display: flex;
+      gap: @spacing-sm;
+    }
+  }
+
+  .chart-container {
+    width: 100%;
+    height: 350px;
+  }
+}
+
+/* ============================================
+ * 🌊 Animations
+ * ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section 依次显示动画 */
+.stock-section {
+  animation: fadeIn 0.3s ease-out;
+
+  &:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+
+  &:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.15s;
+  }
+}
+
+/* ============================================
+ * 📱 Responsive Adjustments
+ * ============================================ */
+@media screen and (max-width: @breakpoint-lg) {
+  .homePage {
+    padding: @spacing-md;
+
+    .stock-content {
+      padding: @spacing-lg;
+
+      .stock-section {
+        .stock-section-title {
+          font-size: @font-size-md;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (max-width: @breakpoint-md) {
+  .homePage {
+    padding: @spacing-sm;
+
+    .stock-content {
+      padding: @spacing-md;
+      border-radius: @radius-md;
+
+      .stock-content-chart {
+        .ai-report-card-chart-container {
+          height: 350px;
+        }
+      }
     }
   }
 }

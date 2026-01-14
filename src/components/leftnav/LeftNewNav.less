@@ -1,10 +1,259 @@
+/**
+ * ============================================
+ * LeftNewNav Component Styles
+ * ============================================
+ * 左侧导航栏 - Light Mode 风格
+ */
+
+@import '../../styles/variables.less';
+
 .leftnav {
-  background: #fff;
-  color: #292e33;
-  .ant-menu {
+  display: flex;
+  flex-direction: column;
+  background: @color-bg-elevated;
+  border-right: 1px solid @color-border;
+  transition: width @transition-smooth;
+  position: relative;
+  overflow: hidden;
+
+  /* ============================================
+   * Menu Container
+   * ============================================ */
+  .menu-ctn {
+    flex: 1;
     overflow-x: hidden;
     overflow-y: auto;
-    padding-top: 10px;
-    border-top: 1px solid #eff3f5;
+    padding: @spacing-md;
+
+    /* 自定义滚动条 */
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: @color-border-light;
+      border-radius: @radius-full;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+
+  /* ============================================
+   * Ant Design Menu Overrides
+   * ============================================ */
+  .ant-menu {
+    background: transparent;
+    border: none;
+    padding: 0;
+
+    /* Menu Item */
+    .ant-menu-item {
+      height: 44px;
+      line-height: 44px;
+      margin: @spacing-xs 0;
+      padding: 0 @spacing-md !important;
+      border-radius: @radius-md;
+      color: @color-text-secondary;
+      font-weight: @font-weight-medium;
+      transition: all @transition-fast;
+
+      /* Icon */
+      .anticon {
+        font-size: 18px;
+        margin-right: @spacing-md;
+        color: @color-text-muted;
+        transition: color @transition-fast;
+      }
+
+      /* Hover State */
+      &:hover {
+        color: @color-primary;
+        background: @color-bg-surface;
+
+        .anticon {
+          color: @color-primary;
+        }
+      }
+
+      /* Selected State */
+      &.ant-menu-item-selected {
+        color: @color-primary;
+        background: rgba(59, 130, 246, 0.1);
+        font-weight: @font-weight-semibold;
+
+        .anticon {
+          color: @color-primary;
+        }
+
+        /* 移除默认的右侧指示器 */
+        &::after {
+          display: none;
+        }
+
+        /* 左侧指示条 */
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 3px;
+          height: 24px;
+          background: @color-primary;
+          border-radius: 0 @radius-sm @radius-sm 0;
+        }
+      }
+
+      /* Active (pressed) State */
+      &:active {
+        background: rgba(59, 130, 246, 0.15);
+      }
+    }
+
+    /* Submenu */
+    .ant-menu-submenu {
+      .ant-menu-submenu-title {
+        height: 44px;
+        line-height: 44px;
+        margin: @spacing-xs 0;
+        padding: 0 @spacing-md !important;
+        border-radius: @radius-md;
+        color: @color-text-secondary;
+        font-weight: @font-weight-medium;
+        transition: all @transition-fast;
+
+        .anticon {
+          font-size: 18px;
+          margin-right: @spacing-md;
+          color: @color-text-muted;
+          transition: color @transition-fast;
+        }
+
+        &:hover {
+          color: @color-primary;
+          background: @color-bg-surface;
+
+          .anticon {
+            color: @color-primary;
+          }
+        }
+
+        /* Arrow */
+        .ant-menu-submenu-arrow {
+          color: @color-text-muted;
+
+          &::before,
+          &::after {
+            background: currentColor;
+          }
+        }
+      }
+
+      /* Submenu Open State */
+      &.ant-menu-submenu-open {
+        >.ant-menu-submenu-title {
+          color: @color-text-primary;
+
+          .anticon {
+            color: @color-primary;
+          }
+
+          .ant-menu-submenu-arrow {
+            color: @color-primary;
+          }
+        }
+      }
+
+      /* Nested Menu */
+      .ant-menu-sub {
+        background: transparent;
+
+        .ant-menu-item {
+          height: 40px;
+          line-height: 40px;
+          padding-left: @spacing-3xl !important;
+
+          &::before {
+            display: none;
+          }
+        }
+      }
+    }
+
+    /* Divider */
+    .ant-menu-item-divider {
+      margin: @spacing-md 0;
+      background: @color-border;
+    }
+
+    /* Collapsed State */
+    &.ant-menu-inline-collapsed {
+      .ant-menu-item {
+        padding: 0 calc(50% - 18px / 2) !important;
+
+        .anticon {
+          margin-right: 0;
+        }
+      }
+
+      .ant-menu-submenu-title {
+        padding: 0 calc(50% - 18px / 2) !important;
+
+        .anticon {
+          margin-right: 0;
+        }
+      }
+    }
+  }
+
+  /* ============================================
+   * Collapse Button Area
+   * ============================================ */
+  .collBtn {
+    display: flex;
+    align-items: center;
+    padding: @spacing-md;
+    border-top: 1px solid @color-border;
+    background: @color-bg-surface;
+
+    .ant-btn {
+      width: 100%;
+      height: 40px;
+      border-radius: @radius-md;
+      color: @color-text-secondary;
+      background: @color-bg-elevated;
+      border: 1px solid @color-border;
+      transition: all @transition-fast;
+
+      &:hover {
+        color: @color-primary;
+        border-color: @color-primary;
+        background: rgba(59, 130, 246, 0.05);
+      }
+
+      .anticon {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+/* ============================================
+ * 📱 Responsive Adjustments
+ * ============================================ */
+@media screen and (max-width: @breakpoint-lg) {
+  .leftnav {
+    .menu-ctn {
+      padding: @spacing-sm;
+    }
+
+    .ant-menu {
+      .ant-menu-item {
+        height: 40px;
+        line-height: 40px;
+      }
+    }
   }
 }

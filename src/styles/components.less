@@ -1,0 +1,385 @@
+/**
+ * ============================================
+ * Shared Component Styles
+ * ============================================
+ * 可复用的 UI 组件样式集合 - Light Mode
+ */
+
+@import './variables.less';
+
+/* ============================================
+ * 🎴 Card Component
+ * ============================================ */
+.card {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-lg;
+  box-shadow: @shadow-card;
+  transition: all @transition-normal;
+
+  &:hover {
+    box-shadow: @shadow-card-hover;
+    transform: translateY(-2px);
+  }
+}
+
+/* ============================================
+ * 📊 Stats Card Component
+ * ============================================ */
+.stats-card {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-lg;
+  padding: @spacing-lg;
+  position: relative;
+  overflow: hidden;
+  transition: all @transition-normal;
+
+  /* 顶部装饰条 */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: @color-primary;
+    opacity: 0;
+    transition: opacity @transition-fast;
+  }
+
+  &:hover {
+    box-shadow: @shadow-card-hover;
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  /* 变体 */
+  &--success {
+    &::before {
+      background: @color-success;
+    }
+  }
+
+  &--danger {
+    &::before {
+      background: @color-danger;
+    }
+  }
+
+  &--warning {
+    &::before {
+      background: @color-warning;
+    }
+  }
+
+  .stats-card__icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: @radius-md;
+    margin-bottom: @spacing-md;
+
+    .anticon {
+      font-size: 24px;
+      color: @color-primary;
+    }
+  }
+
+  .stats-card__value {
+    font-family: @font-family-heading;
+    font-size: @font-size-3xl;
+    font-weight: @font-weight-bold;
+    color: @color-text-primary;
+    line-height: 1.2;
+    margin-bottom: @spacing-xs;
+  }
+
+  .stats-card__label {
+    font-size: @font-size-sm;
+    color: @color-text-muted;
+  }
+
+  .stats-card__trend {
+    display: flex;
+    align-items: center;
+    gap: @spacing-xs;
+    font-size: @font-size-sm;
+    margin-top: @spacing-sm;
+
+    &--up {
+      color: @color-success;
+    }
+
+    &--down {
+      color: @color-danger;
+    }
+  }
+}
+
+/* ============================================
+ * 🏷️ Badge Component
+ * ============================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: @spacing-xs @spacing-sm;
+  font-size: @font-size-xs;
+  font-weight: @font-weight-medium;
+  border-radius: @radius-full;
+  line-height: 1;
+
+  &--primary {
+    background: rgba(59, 130, 246, 0.1);
+    color: @color-primary;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+  }
+
+  &--success {
+    background: @color-success-bg;
+    color: @color-success;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+
+  &--danger {
+    background: @color-danger-bg;
+    color: @color-danger;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  &--warning {
+    background: @color-warning-bg;
+    color: @color-warning;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  &--info {
+    background: @color-info-bg;
+    color: @color-info;
+    border: 1px solid rgba(14, 165, 233, 0.2);
+  }
+}
+
+/* ============================================
+ * 📦 Section Component
+ * ============================================ */
+.section {
+  margin-bottom: @spacing-2xl;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .section__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: @spacing-lg;
+    padding-bottom: @spacing-md;
+    border-bottom: 1px solid @color-border;
+  }
+
+  .section__title {
+    font-family: @font-family-heading;
+    font-size: @font-size-xl;
+    font-weight: @font-weight-semibold;
+    color: @color-text-primary;
+    position: relative;
+    padding-left: @spacing-md;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 20px;
+      background: @color-primary;
+      border-radius: @radius-full;
+    }
+  }
+
+  .section__actions {
+    display: flex;
+    align-items: center;
+    gap: @spacing-sm;
+  }
+
+  .section__content {
+    // Content styling
+  }
+}
+
+/* ============================================
+ * 🔔 Empty State Component
+ * ============================================ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: @spacing-4xl;
+  text-align: center;
+
+  .empty-state__icon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: @color-bg-surface;
+    border-radius: @radius-full;
+    margin-bottom: @spacing-xl;
+
+    .anticon {
+      font-size: 36px;
+      color: @color-text-muted;
+    }
+  }
+
+  .empty-state__title {
+    font-size: @font-size-lg;
+    font-weight: @font-weight-semibold;
+    color: @color-text-primary;
+    margin-bottom: @spacing-sm;
+  }
+
+  .empty-state__description {
+    font-size: @font-size-base;
+    color: @color-text-muted;
+    max-width: 300px;
+    margin-bottom: @spacing-xl;
+  }
+}
+
+/* ============================================
+ * 💫 Skeleton Loading
+ * ============================================ */
+.skeleton {
+  background: linear-gradient(90deg,
+      @color-bg-surface 25%,
+      @color-bg-elevated 50%,
+      @color-bg-surface 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: @radius-md;
+
+  &--text {
+    height: 1em;
+    width: 100%;
+    margin-bottom: @spacing-sm;
+  }
+
+  &--title {
+    height: 1.5em;
+    width: 60%;
+    margin-bottom: @spacing-md;
+  }
+
+  &--avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: @radius-full;
+  }
+
+  &--image {
+    height: 200px;
+    width: 100%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================
+ * 🎯 Price Display Components
+ * ============================================ */
+.price {
+  font-family: @font-family-mono;
+  font-weight: @font-weight-semibold;
+
+  &--up {
+    color: @color-danger;
+
+    &::before {
+      content: '↑';
+      margin-right: @spacing-xs;
+    }
+  }
+
+  &--down {
+    color: @color-success;
+
+    &::before {
+      content: '↓';
+      margin-right: @spacing-xs;
+    }
+  }
+
+  &--neutral {
+    color: @color-text-secondary;
+  }
+}
+
+.price-change {
+  display: inline-flex;
+  align-items: center;
+  gap: @spacing-xs;
+  padding: @spacing-xs @spacing-sm;
+  border-radius: @radius-sm;
+  font-size: @font-size-sm;
+  font-weight: @font-weight-medium;
+  font-family: @font-family-mono;
+
+  &--up {
+    background: @color-danger-bg;
+    color: @color-danger;
+  }
+
+  &--down {
+    background: @color-success-bg;
+    color: @color-success;
+  }
+}
+
+/* ============================================
+ * 📱 Responsive Utilities
+ * ============================================ */
+@media (max-width: @breakpoint-md) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: @breakpoint-md) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* ============================================
+ * ⚡ Reduced Motion
+ * ============================================ */
+@media (prefers-reduced-motion: reduce) {
+
+  .card,
+  .stats-card,
+  .skeleton {
+    transition: none;
+    animation: none;
+  }
+}

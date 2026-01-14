@@ -1,25 +1,109 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI股票助手</title>
+<!DOCTYPE html>
+<html lang="zh-CN">
 
-    <script src="https://o.alicdn.com/appflow/chatbot/v1/AppflowChatSDK.js"></script>
-    <script>
-      window.APPFLOW_CHAT_SDK.init({
-        integrateConfig: {
-          integrateId: 'cit-272a9ac40ef845ffa821',
-          domain: {
-            requestDomain: 'https://1720269232115722.appflow.aliyunnest.com'
-          }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO Meta Tags -->
+  <title>AI股票助手 - 智能投资分析平台</title>
+  <meta name="description" content="AI股票助手是一款智能投资分析平台，提供实时行情、交易管理、AI投顾等功能，帮助您做出更明智的投资决策。" />
+  <meta name="keywords" content="AI股票,股票助手,智能投资,实时行情,交易管理,投资分析" />
+  <meta name="author" content="AI Stock Assistant Team" />
+
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="AI股票助手 - 智能投资分析平台" />
+  <meta property="og:description" content="智能投资分析平台，提供实时行情、交易管理、AI投顾等功能" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="apple-touch-icon" href="/vite.svg" />
+
+  <!-- Theme Color for Mobile Browsers -->
+  <meta name="theme-color" content="#3B82F6" />
+  <meta name="msapplication-TileColor" content="#3B82F6" />
+
+  <!-- Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Google Fonts - Poppins & Open Sans -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <!-- Preload Critical Assets -->
+  <link rel="preload" href="/vite.svg" as="image" type="image/svg+xml" />
+
+  <!-- External Chat SDK -->
+  <script src="https://o.alicdn.com/appflow/chatbot/v1/AppflowChatSDK.js"></script>
+  <script>
+    window.APPFLOW_CHAT_SDK.init({
+      integrateConfig: {
+        integrateId: 'cit-272a9ac40ef845ffa821',
+        domain: {
+          requestDomain: 'https://1720269232115722.appflow.aliyunnest.com'
         }
-      });
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+      }
+    });
+  </script>
+
+  <!-- Inline Critical Styles for Initial Load -->
+  <style>
+    /* 初始加载时的背景色 - Light Mode */
+    html,
+    body {
+      background-color: #F8FAFC;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 加载容器 */
+    #root {
+      min-height: 100vh;
+      background-color: #F8FAFC;
+    }
+
+    /* 首屏加载占位 */
+    .initial-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F8FAFC;
+      z-index: 9999;
+    }
+
+    .initial-loader .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #E2E8F0;
+      border-top-color: #3B82F6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <!-- 初始加载动画（React 加载后会被替换） -->
+    <div class="initial-loader">
+      <div class="spinner"></div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

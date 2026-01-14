@@ -1,46 +1,215 @@
+/**
+ * ============================================
+ * NewHeader Component Styles
+ * ============================================
+ * 顶部导航栏 - Light Mode 风格
+ */
+
+@import '../../styles/variables.less';
+
 .newheader {
-  height: 56px;
-  line-height: 56px;
-  padding: 0 16px;
+  height: @header-height;
+  padding: 0 @spacing-xl;
+  display: flex;
   align-items: center;
-  background-color: #363E4D;
-  transition: background-color linear 0.2s;
-  color: #fff;
+  justify-content: space-between;
+
+  /* 亮色背景 - 深色导航栏保持专业感 */
+  background: linear-gradient(135deg,
+      #363E4D 0%,
+      #2C3440 100%);
+
+  /* 底部边框 */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  position: relative;
+  z-index: @z-sticky;
   min-width: 600px;
+  color: #fff;
 
+  transition: all @transition-normal;
+
+  /* ============================================
+   * Logo Section
+   * ============================================ */
   .logo {
+    display: flex;
     align-items: center;
+    gap: @spacing-md;
+    cursor: pointer;
+    padding: @spacing-sm;
+    border-radius: @radius-md;
+    transition: all @transition-fast;
 
-    img {
-      width: 24px;
-      height: 24px;
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
     }
 
+    img {
+      width: 28px;
+      height: 28px;
+      filter: brightness(1.1);
+      transition: filter @transition-normal;
+    }
 
+    &:hover img {
+      filter: brightness(1.2);
+    }
+
+    .logo-text {
+      font-family: @font-family-heading;
+      font-size: @font-size-lg;
+      font-weight: @font-weight-bold;
+      letter-spacing: 0.5px;
+      color: #fff;
+      transition: color @transition-fast;
+    }
   }
 
+  /* ============================================
+   * Navigation Section
+   * ============================================ */
   .title-nav {
     position: relative;
     margin-left: 28px;
-    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: @spacing-sm;
+    padding: @spacing-sm @spacing-md;
+    font-size: @font-size-base;
+    color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
+    border-radius: @radius-md;
+    transition: all @transition-fast;
+
+    &:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &.active {
+      color: #fff;
+      background: rgba(59, 130, 246, 0.3);
+    }
 
     .nav-text {
-      margin-left: 8px;
-      font-weight: 400;
+      font-weight: @font-weight-medium;
     }
 
     .icon {
       >svg {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
       }
     }
   }
 
+  /* ============================================
+   * Center Section
+   * ============================================ */
   .t-center-wrap {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: @spacing-lg;
+  }
+
+  /* ============================================
+   * Header Info Section (Right Side)
+   * ============================================ */
+  .header-info {
+    display: flex;
+    align-items: center;
+    gap: @spacing-md;
+    font-size: @font-size-base;
+    color: rgba(255, 255, 255, 0.8);
+
+    .header-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: @radius-full;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: all @transition-fast;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+
+      &.active {
+        background: rgba(59, 130, 246, 0.3);
+        color: #fff;
+      }
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: @spacing-sm;
+      padding: @spacing-xs @spacing-md;
+      border-radius: @radius-full;
+      cursor: pointer;
+      transition: all @transition-fast;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: @radius-full;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        transition: border-color @transition-fast;
+      }
+
+      &:hover .user-avatar {
+        border-color: @color-primary-light;
+      }
+
+      .user-name {
+        font-weight: @font-weight-medium;
+        color: #fff;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+}
+
+/* ============================================
+ * 📱 Responsive Adjustments
+ * ============================================ */
+@media screen and (max-width: @breakpoint-md) {
+  .newheader {
+    padding: 0 @spacing-lg;
+
+    .logo {
+      .logo-text {
+        display: none;
+      }
+    }
+
+    .header-info {
+      .user-name {
+        display: none;
+      }
+    }
   }
 }

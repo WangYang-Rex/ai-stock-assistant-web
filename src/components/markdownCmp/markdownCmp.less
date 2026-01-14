@@ -1,42 +1,289 @@
+/**
+ * ============================================
+ * Markdown Component Styles
+ * ============================================
+ * AI 分析内容的 Markdown 渲染样式 - Light Mode
+ */
+
+@import '../../styles/variables.less';
+
 .ai-markdown-content {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  /* 出现横向滚动条 */
   -webkit-overflow-scrolling: touch;
-  /* iOS 平滑滚动 */
-  // margin-bottom: 10px;
+  color: @color-text-secondary;
+  font-size: @font-size-base;
+  line-height: 1.8;
 
-  table {
-    font-size: 13px;
+  /* ============================================
+   * Headings
+   * ============================================ */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: @font-family-heading;
+    color: @color-text-primary;
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    font-weight: @font-weight-semibold;
 
-    thead {
-      background-color: rgba(235, 243, 255, 1);
-    }
-
-    th {
-      padding: 4px 8px;
-      border: 1px solid #E5E5E5;
-    }
-
-    td {
-      padding: 4px 8px;
-      border: 1px solid #E5E5E5;
+    &:first-child {
+      margin-top: 0;
     }
   }
 
+  h1 {
+    font-size: @font-size-2xl;
+  }
+
+  h2 {
+    font-size: @font-size-xl;
+  }
+
+  h3 {
+    font-size: @font-size-lg;
+    color: @color-primary-dark;
+    display: flex;
+    align-items: center;
+    gap: @spacing-sm;
+
+    &::before {
+      content: '';
+      width: 3px;
+      height: 1em;
+      background: @color-primary;
+      border-radius: @radius-full;
+    }
+  }
+
+  h4 {
+    font-size: @font-size-md;
+  }
+
+  h5 {
+    font-size: @font-size-base;
+  }
+
+  h6 {
+    font-size: @font-size-sm;
+  }
+
+  /* ============================================
+   * Paragraphs
+   * ============================================ */
   p {
-    // margin-bottom: .25em;
+    margin-bottom: 1em;
+    color: @color-text-secondary;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
+  /* ============================================
+   * Links
+   * ============================================ */
+  a {
+    color: @color-primary;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all @transition-fast;
+
+    &:hover {
+      color: @color-primary-dark;
+      border-bottom-color: @color-primary;
+    }
+  }
+
+  /* ============================================
+   * Strong & Emphasis
+   * ============================================ */
+  strong,
+  b {
+    color: @color-text-primary;
+    font-weight: @font-weight-semibold;
+  }
+
+  em,
+  i {
+    font-style: italic;
+    color: @color-text-secondary;
+  }
+
+  /* ============================================
+   * Lists
+   * ============================================ */
   ul,
   ol {
-    padding-left: 20px;
-    list-style-type: disc;
-    margin-bottom: 10px;
+    padding-left: @spacing-xl;
+    margin-bottom: 1em;
+
+    li {
+      color: @color-text-secondary;
+      margin-bottom: 0.5em;
+      position: relative;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
   }
 
-  li+li {
-    // margin-top: 10px;
+  ul {
+    list-style-type: none;
+
+    >li {
+      &::before {
+        content: '';
+        position: absolute;
+        left: -@spacing-lg;
+        top: 0.6em;
+        width: 6px;
+        height: 6px;
+        background: @color-primary;
+        border-radius: @radius-full;
+      }
+    }
   }
+
+  ol {
+    list-style-type: decimal;
+    list-style-position: outside;
+
+    >li::marker {
+      color: @color-primary;
+      font-weight: @font-weight-semibold;
+    }
+  }
+
+  /* ============================================
+   * Tables
+   * ============================================ */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: @font-size-sm;
+    margin: 1em 0;
+    background: @color-bg-elevated;
+    border-radius: @radius-md;
+    overflow: hidden;
+    border: 1px solid @color-border;
+
+    thead {
+      background: rgba(59, 130, 246, 0.08);
+
+      th {
+        color: @color-text-primary;
+        font-weight: @font-weight-semibold;
+        text-align: left;
+      }
+    }
+
+    th,
+    td {
+      padding: @spacing-sm @spacing-md;
+      border: 1px solid @color-border;
+      color: @color-text-secondary;
+    }
+
+    tbody tr {
+      transition: background @transition-fast;
+
+      &:hover {
+        background: @color-bg-surface;
+      }
+
+      &:nth-child(even) {
+        background: rgba(0, 0, 0, 0.02);
+      }
+    }
+  }
+
+  /* ============================================
+   * Code
+   * ============================================ */
+  code {
+    font-family: @font-family-mono;
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    background: @color-bg-surface;
+    border: 1px solid @color-border;
+    border-radius: @radius-sm;
+    color: @color-primary-dark;
+  }
+
+  pre {
+    background: @color-bg-surface;
+    border: 1px solid @color-border;
+    border-radius: @radius-md;
+    padding: @spacing-lg;
+    overflow-x: auto;
+    margin: 1em 0;
+
+    code {
+      padding: 0;
+      background: transparent;
+      border: none;
+      color: @color-text-primary;
+    }
+  }
+
+  /* ============================================
+   * Blockquote
+   * ============================================ */
+  blockquote {
+    margin: 1em 0;
+    padding: @spacing-md @spacing-lg;
+    background: rgba(59, 130, 246, 0.05);
+    border-left: 3px solid @color-primary;
+    border-radius: 0 @radius-md @radius-md 0;
+    color: @color-text-secondary;
+    font-style: italic;
+
+    p {
+      margin-bottom: 0;
+    }
+  }
+
+  /* ============================================
+   * Horizontal Rule
+   * ============================================ */
+  hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        @color-border 20%,
+        @color-border 80%,
+        transparent 100%);
+    margin: 2em 0;
+  }
+
+  /* ============================================
+   * Custom Scrollbar
+   * ============================================ */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: @color-border-light;
+    border-radius: @radius-full;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ============================================
+ * AI Message Item Wrapper
+ * ============================================ */
+.ai-message-item {
+  position: relative;
+  padding-left: @spacing-lg;
 }

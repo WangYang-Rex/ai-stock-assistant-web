@@ -1,13 +1,32 @@
+/**
+ * ============================================
+ * AI Stock Assistant - App Layout Styles
+ * ============================================
+ * 应用整体布局样式 - Light Mode
+ */
+
+@import './variables.less';
+
+/* ============================================
+ * 🏠 Root Container
+ * ============================================ */
 #root {
   height: 100%;
   width: 100%;
   position: relative;
 }
+
+/* ============================================
+ * 📱 Page Layout
+ * ============================================ */
 .pageMain-wrap {
   height: 100%;
   width: 100%;
-  min-width: 770px;
+  min-width: 800px;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  background: @color-bg-base;
 }
 
 .pageMain {
@@ -18,6 +37,7 @@
   bottom: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  background: @color-bg-base;
 }
 
 .main {
@@ -28,29 +48,634 @@
   bottom: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  background: @color-bg-base;
+  padding: @spacing-lg;
 }
+
 .main-content {
   position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: @color-bg-base;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: @radius-full;
+    background-color: @color-border-light;
+
+    &:hover {
+      background-color: @color-text-hint;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    border-radius: @radius-full;
+    background-color: transparent;
+  }
 }
 
-.main-content::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+/* ============================================
+ * 🎨 Ant Design Theme Overrides - Light Mode
+ * ============================================ */
+
+/* --- Buttons --- */
+.ant-btn {
+  font-family: @font-family-body;
+  font-weight: @font-weight-medium;
+  border-radius: @radius-md;
+  transition: all @transition-normal;
+
+  &:focus-visible {
+    outline: 2px solid @color-primary;
+    outline-offset: 2px;
+  }
 }
 
-.main-content::-webkit-scrollbar-thumb {
-  border-radius: 1em;
-  background-color: #D4D8DB;
+.ant-btn-primary {
+  background: @color-primary;
+  border: none;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+
+  &:hover {
+    background: @color-primary-dark;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
-.main-content::-webkit-scrollbar-track {
-  border-radius: 1em;
-  background-color: #fff;
+.ant-btn-default {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  color: @color-text-primary;
+
+  &:hover {
+    border-color: @color-primary;
+    color: @color-primary;
+  }
 }
 
-.text-color-green {
-  color: green;
+.ant-btn-text {
+  color: @color-text-secondary;
+
+  &:hover {
+    background: @color-bg-surface;
+    color: @color-text-primary;
+  }
 }
-.text-color-red {
-  color: red;
+
+.ant-btn-link {
+  color: @color-primary;
+
+  &:hover {
+    color: @color-primary-dark;
+  }
+}
+
+/* --- Cards --- */
+.ant-card {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-lg;
+  box-shadow: @shadow-card;
+  transition: all @transition-normal;
+
+  &:hover {
+    box-shadow: @shadow-card-hover;
+  }
+
+  .ant-card-head {
+    background: transparent;
+    border-bottom: 1px solid @color-border;
+    color: @color-text-primary;
+
+    .ant-card-head-title {
+      font-family: @font-family-heading;
+      font-weight: @font-weight-semibold;
+    }
+  }
+
+  .ant-card-body {
+    color: @color-text-secondary;
+  }
+}
+
+/* --- Tables --- */
+.ant-table-wrapper {
+  .ant-table {
+    background: @color-bg-elevated;
+    font-size: @font-size-base;
+    border-radius: @radius-lg;
+    overflow: hidden;
+  }
+
+  .ant-table-thead>tr>th {
+    background: @color-bg-surface;
+    color: @color-text-primary;
+    font-weight: @font-weight-semibold;
+    border-bottom: 1px solid @color-border;
+    padding: @spacing-md @spacing-lg;
+  }
+
+  .ant-table-tbody>tr {
+    transition: background @transition-fast;
+
+    >td {
+      background: @color-bg-elevated;
+      color: @color-text-secondary;
+      border-bottom: 1px solid @color-border;
+      padding: @spacing-md @spacing-lg;
+    }
+
+    &:hover>td {
+      background: @color-bg-surface !important;
+    }
+  }
+
+  .ant-table-row-selected>td {
+    background: rgba(59, 130, 246, 0.08) !important;
+  }
+
+  /* Pagination */
+  .ant-table-pagination {
+    margin: @spacing-lg 0;
+  }
+}
+
+/* --- Forms --- */
+.ant-input,
+.ant-input-affix-wrapper {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-md;
+  color: @color-text-primary;
+  transition: all @transition-fast;
+
+  &::placeholder {
+    color: @color-text-hint;
+  }
+
+  &:hover {
+    border-color: @color-primary-light;
+  }
+
+  &:focus,
+  &.ant-input-affix-wrapper-focused {
+    border-color: @color-primary;
+    box-shadow: @shadow-glow-primary;
+  }
+}
+
+.ant-input-affix-wrapper {
+  .ant-input {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+
+    &:focus {
+      box-shadow: none;
+    }
+  }
+}
+
+.ant-form-item-label>label {
+  color: @color-text-primary;
+  font-weight: @font-weight-medium;
+}
+
+.ant-form-item-explain-error {
+  color: @color-danger;
+}
+
+/* --- Select --- */
+.ant-select {
+  .ant-select-selector {
+    background: @color-bg-elevated !important;
+    border: 1px solid @color-border !important;
+    border-radius: @radius-md !important;
+    color: @color-text-primary;
+    transition: all @transition-fast;
+  }
+
+  &:hover .ant-select-selector {
+    border-color: @color-primary-light !important;
+  }
+
+  &.ant-select-focused .ant-select-selector {
+    border-color: @color-primary !important;
+    box-shadow: @shadow-glow-primary !important;
+  }
+
+  .ant-select-arrow {
+    color: @color-text-muted;
+  }
+
+  .ant-select-selection-placeholder {
+    color: @color-text-hint;
+  }
+}
+
+.ant-select-dropdown {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-md;
+  box-shadow: @shadow-lg;
+
+  .ant-select-item {
+    color: @color-text-secondary;
+    transition: background @transition-fast;
+
+    &:hover {
+      background: @color-bg-surface;
+    }
+  }
+
+  .ant-select-item-option-selected {
+    background: rgba(59, 130, 246, 0.1);
+    color: @color-primary;
+    font-weight: @font-weight-medium;
+  }
+
+  .ant-select-item-option-active {
+    background: @color-bg-surface;
+  }
+}
+
+/* --- Date Picker --- */
+.ant-picker {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-md;
+
+  &:hover {
+    border-color: @color-primary-light;
+  }
+
+  &.ant-picker-focused {
+    border-color: @color-primary;
+    box-shadow: @shadow-glow-primary;
+  }
+
+  .ant-picker-input>input {
+    color: @color-text-primary;
+
+    &::placeholder {
+      color: @color-text-hint;
+    }
+  }
+}
+
+.ant-picker-dropdown {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-md;
+  box-shadow: @shadow-lg;
+
+  .ant-picker-panel {
+    background: @color-bg-elevated;
+    border: none;
+  }
+
+  .ant-picker-header {
+    color: @color-text-primary;
+    border-bottom: 1px solid @color-border;
+  }
+
+  .ant-picker-cell {
+    color: @color-text-secondary;
+
+    &:hover .ant-picker-cell-inner {
+      background: @color-bg-surface;
+    }
+
+    &.ant-picker-cell-selected .ant-picker-cell-inner {
+      background: @color-primary;
+      color: #fff;
+    }
+
+    &.ant-picker-cell-today .ant-picker-cell-inner {
+      border-color: @color-primary;
+    }
+  }
+}
+
+/* --- Modal --- */
+.ant-modal {
+  .ant-modal-content {
+    background: @color-bg-elevated;
+    border: 1px solid @color-border;
+    border-radius: @radius-xl;
+    box-shadow: @shadow-xl;
+  }
+
+  .ant-modal-header {
+    background: transparent;
+    border-bottom: 1px solid @color-border;
+
+    .ant-modal-title {
+      color: @color-text-primary;
+      font-family: @font-family-heading;
+      font-weight: @font-weight-semibold;
+    }
+  }
+
+  .ant-modal-body {
+    color: @color-text-secondary;
+  }
+
+  .ant-modal-footer {
+    border-top: 1px solid @color-border;
+  }
+
+  .ant-modal-close {
+    color: @color-text-muted;
+
+    &:hover {
+      color: @color-text-primary;
+      background: @color-bg-surface;
+    }
+  }
+}
+
+.ant-modal-mask {
+  background: @color-bg-overlay;
+}
+
+/* --- Message & Notification --- */
+.ant-message-notice-content,
+.ant-notification-notice {
+  background: @color-bg-elevated;
+  border: 1px solid @color-border;
+  border-radius: @radius-md;
+  box-shadow: @shadow-lg;
+  color: @color-text-primary;
+}
+
+/* --- Tooltip --- */
+.ant-tooltip {
+  .ant-tooltip-inner {
+    background: @color-text-primary;
+    color: @color-bg-elevated;
+    border-radius: @radius-md;
+    box-shadow: @shadow-md;
+  }
+}
+
+/* --- Popconfirm --- */
+.ant-popconfirm {
+  .ant-popover-inner {
+    background: @color-bg-elevated;
+    border: 1px solid @color-border;
+    border-radius: @radius-md;
+    box-shadow: @shadow-lg;
+  }
+
+  .ant-popconfirm-title {
+    color: @color-text-primary;
+  }
+
+  .ant-popconfirm-description {
+    color: @color-text-secondary;
+  }
+}
+
+/* --- Statistic --- */
+.ant-statistic {
+  .ant-statistic-title {
+    color: @color-text-muted;
+    font-size: @font-size-sm;
+  }
+
+  .ant-statistic-content {
+    color: @color-text-primary;
+    font-family: @font-family-heading;
+    font-weight: @font-weight-semibold;
+  }
+}
+
+/* --- Spin --- */
+.ant-spin {
+  color: @color-primary;
+
+  .ant-spin-text {
+    color: @color-text-secondary;
+  }
+}
+
+/* --- Empty --- */
+.ant-empty {
+  .ant-empty-description {
+    color: @color-text-muted;
+  }
+}
+
+/* --- Menu --- */
+.ant-menu {
+  background: transparent;
+  border: none;
+
+  .ant-menu-item {
+    color: @color-text-secondary;
+    border-radius: @radius-md;
+    margin: @spacing-xs 0;
+    transition: all @transition-fast;
+
+    &:hover {
+      color: @color-primary;
+      background: @color-bg-surface;
+    }
+
+    &.ant-menu-item-selected {
+      color: @color-primary;
+      background: rgba(59, 130, 246, 0.1);
+      font-weight: @font-weight-medium;
+
+      &::after {
+        display: none;
+      }
+    }
+  }
+
+  .ant-menu-submenu-title {
+    color: @color-text-secondary;
+
+    &:hover {
+      color: @color-primary;
+      background: @color-bg-surface;
+    }
+  }
+
+  .ant-menu-submenu-arrow {
+    color: @color-text-muted;
+  }
+
+  &.ant-menu-inline-collapsed {
+    .ant-menu-item {
+      padding: 0 calc(50% - 16px / 2);
+    }
+  }
+}
+
+/* --- Tag --- */
+.ant-tag {
+  border-radius: @radius-sm;
+  font-weight: @font-weight-medium;
+
+  &.ant-tag-success {
+    background: @color-success-bg;
+    border-color: @color-success;
+    color: @color-success;
+  }
+
+  &.ant-tag-error {
+    background: @color-danger-bg;
+    border-color: @color-danger;
+    color: @color-danger;
+  }
+
+  &.ant-tag-warning {
+    background: @color-warning-bg;
+    border-color: @color-warning;
+    color: @color-warning;
+  }
+
+  &.ant-tag-processing {
+    background: @color-info-bg;
+    border-color: @color-info;
+    color: @color-info;
+  }
+}
+
+/* --- Pagination --- */
+.ant-pagination {
+  .ant-pagination-item {
+    background: @color-bg-elevated;
+    border: 1px solid @color-border;
+    border-radius: @radius-md;
+
+    a {
+      color: @color-text-secondary;
+    }
+
+    &:hover {
+      border-color: @color-primary;
+
+      a {
+        color: @color-primary;
+      }
+    }
+
+    &.ant-pagination-item-active {
+      background: @color-primary;
+      border-color: @color-primary;
+
+      a {
+        color: #fff;
+      }
+    }
+  }
+
+  .ant-pagination-prev,
+  .ant-pagination-next {
+    .ant-pagination-item-link {
+      background: @color-bg-elevated;
+      border: 1px solid @color-border;
+      border-radius: @radius-md;
+      color: @color-text-secondary;
+
+      &:hover {
+        border-color: @color-primary;
+        color: @color-primary;
+      }
+    }
+  }
+}
+
+/* ============================================
+ * 🔄 Loading States
+ * ============================================ */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: @color-text-secondary;
+}
+
+/* ============================================
+ * 🌟 Animations
+ * ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: linear-gradient(90deg,
+      @color-bg-surface 25%,
+      @color-bg-elevated 50%,
+      @color-bg-surface 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: @radius-md;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

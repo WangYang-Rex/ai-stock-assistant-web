@@ -1,77 +1,403 @@
+/**
+ * ============================================
+ * Trade Page Styles
+ * ============================================
+ * 交易页面样式 - Light Mode 风格
+ */
+
+@import '../../styles/variables.less';
+
 .tradePage {
-  .trade-content {
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
+  padding: @spacing-lg;
+  min-height: 100%;
+  background: transparent;
+  animation: fadeIn 0.3s ease-out;
 
-    .trade-section {
-      margin-bottom: 20px;
+  /* ============================================
+   * Filter Section
+   * ============================================ */
+  .trade-filter {
+    display: flex;
+    align-items: center;
+    gap: @spacing-md;
+    margin-bottom: @spacing-lg;
+    flex-wrap: wrap;
 
-      .trade-section-title {
-        color: #000;
-        font-family: "PingFang HK";
-        font-size: 18px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: normal;
-        margin-bottom: 16px;
+    /* 添加按钮特殊样式 */
+    .ant-btn-primary {
+      background: @color-primary;
+      border: none;
+      font-weight: @font-weight-medium;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+
+      &:hover {
+        background: @color-primary-dark;
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        transform: translateY(-1px);
       }
     }
   }
 
-  // 统计卡片样式
-  .ant-card {
-    border-radius: 8px;
-    border: 1px solid #e8e8e8;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s;
+  /* ============================================
+   * Content Container
+   * ============================================ */
+  .trade-content {
+    background: @color-bg-elevated;
+    border: 1px solid @color-border;
+    border-radius: @radius-lg;
+    padding: @spacing-xl;
+    box-shadow: @shadow-card;
 
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* ============================================
+     * Section
+     * ============================================ */
+    .trade-section {
+      margin-bottom: @spacing-2xl;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Section Title */
+      .trade-section-title {
+        font-family: @font-family-heading;
+        font-size: @font-size-lg;
+        font-weight: @font-weight-semibold;
+        color: @color-text-primary;
+        margin-bottom: @spacing-lg;
+        padding-bottom: @spacing-md;
+        border-bottom: 1px solid @color-border;
+        position: relative;
+
+        /* 装饰性下划线 */
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: -1px;
+          left: 0;
+          width: 50px;
+          height: 2px;
+          background: @color-primary;
+          border-radius: @radius-full;
+        }
+      }
     }
   }
 
-  // 表格样式优化
+  /* ============================================
+   * Statistics Cards
+   * ============================================ */
+  .ant-row {
+    margin-left: -@spacing-sm !important;
+    margin-right: -@spacing-sm !important;
+  }
+
+  .ant-col {
+    padding-left: @spacing-sm !important;
+    padding-right: @spacing-sm !important;
+  }
+
+  .ant-card {
+    background: @color-bg-elevated;
+    border: 1px solid @color-border;
+    border-radius: @radius-md;
+    box-shadow: @shadow-card;
+    transition: all @transition-normal;
+    overflow: hidden;
+    position: relative;
+
+    /* 顶部装饰条 */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: @color-primary;
+      opacity: 0;
+      transition: opacity @transition-fast;
+    }
+
+    &:hover {
+      box-shadow: @shadow-card-hover;
+      transform: translateY(-2px);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    .ant-card-body {
+      padding: @spacing-lg;
+    }
+
+    /* Statistic 组件样式 */
+    .ant-statistic {
+      .ant-statistic-title {
+        font-size: @font-size-sm;
+        color: @color-text-muted;
+        margin-bottom: @spacing-sm;
+      }
+
+      .ant-statistic-content {
+        font-family: @font-family-heading;
+        font-size: @font-size-2xl;
+        font-weight: @font-weight-bold;
+        color: @color-text-primary;
+
+        .ant-statistic-content-prefix {
+          margin-right: @spacing-sm;
+          color: @color-text-muted;
+
+          .anticon {
+            font-size: @font-size-lg;
+          }
+        }
+
+        .ant-statistic-content-suffix {
+          font-size: @font-size-base;
+          color: @color-text-muted;
+          margin-left: @spacing-xs;
+        }
+      }
+    }
+
+    /* 买入统计卡片 */
+    &:nth-child(2) {
+      .ant-statistic-content {
+        color: @color-danger;
+      }
+
+      &::before {
+        background: @color-danger;
+      }
+    }
+
+    /* 卖出统计卡片 */
+    &:nth-child(3) {
+      .ant-statistic-content {
+        color: @color-success;
+      }
+
+      &::before {
+        background: @color-success;
+      }
+    }
+  }
+
+  /* ============================================
+   * Table Styles
+   * ============================================ */
   .ant-table-wrapper {
     .ant-table {
-      font-size: 14px;
+      background: @color-bg-elevated;
+      font-size: @font-size-base;
+      border-radius: @radius-md;
+      overflow: hidden;
+
+      /* 表头 */
+      .ant-table-thead>tr>th {
+        background: @color-bg-surface;
+        color: @color-text-primary;
+        font-weight: @font-weight-semibold;
+        border-bottom: 1px solid @color-border;
+        padding: @spacing-md @spacing-lg;
+
+        &:first-child {
+          border-top-left-radius: @radius-md;
+        }
+
+        &:last-child {
+          border-top-right-radius: @radius-md;
+        }
+      }
+
+      /* 表体 */
+      .ant-table-tbody>tr {
+        transition: all @transition-fast;
+
+        >td {
+          background: @color-bg-elevated;
+          color: @color-text-secondary;
+          border-bottom: 1px solid @color-border;
+          padding: @spacing-md @spacing-lg;
+        }
+
+        &:hover>td {
+          background: @color-bg-surface !important;
+        }
+      }
     }
 
-    .ant-table-thead > tr > th {
-      background-color: #fafafa;
-      font-weight: 600;
-      color: rgba(0, 0, 0, 0.85);
-    }
-
-    .ant-table-tbody > tr:hover > td {
-      background-color: #f5f5f5;
+    /* Pagination */
+    .ant-table-pagination {
+      margin-top: @spacing-xl;
     }
   }
 
-  // 操作链接样式
+  /* ============================================
+   * Action Links
+   * ============================================ */
   a {
-    transition: all 0.3s;
+    color: @color-primary;
+    transition: all @transition-fast;
+    display: inline-flex;
+    align-items: center;
+    gap: @spacing-xs;
 
     &:hover {
-      opacity: 0.8;
+      color: @color-primary-dark;
+    }
+
+    &.danger,
+    &[style*="color: rgb(255, 77, 79)"] {
+      color: @color-danger !important;
+
+      &:hover {
+        color: @color-danger-light !important;
+      }
     }
   }
 }
 
-// 全局文本颜色工具类（如果不存在）
-.text-color-red {
-  color: #cf1322;
+/* ============================================
+ * Trade Type Tags
+ * ============================================ */
+.trade-type-buy {
+  display: inline-flex;
+  align-items: center;
+  padding: @spacing-xs @spacing-sm;
+  background: @color-danger-bg;
+  color: @color-danger;
+  border: 1px solid @color-danger;
+  border-radius: @radius-sm;
+  font-size: @font-size-sm;
+  font-weight: @font-weight-medium;
 }
 
-.text-color-green {
-  color: #3f8600;
+.trade-type-sell {
+  display: inline-flex;
+  align-items: center;
+  padding: @spacing-xs @spacing-sm;
+  background: @color-success-bg;
+  color: @color-success;
+  border: 1px solid @color-success;
+  border-radius: @radius-sm;
+  font-size: @font-size-sm;
+  font-weight: @font-weight-medium;
 }
 
-// Margin 工具类
-.mb_12 {
-  margin-bottom: 12px;
+/* ============================================
+ * Modal Form Styles
+ * ============================================ */
+.ant-modal {
+  .ant-form {
+    .ant-form-item {
+      margin-bottom: @spacing-lg;
+
+      .ant-form-item-label>label {
+        color: @color-text-primary;
+        font-weight: @font-weight-medium;
+      }
+
+      .ant-form-item-explain-error {
+        color: @color-danger;
+        font-size: @font-size-sm;
+        margin-top: @spacing-xs;
+      }
+    }
+
+    .ant-input,
+    .ant-input-number,
+    .ant-picker {
+      &:hover {
+        border-color: @color-primary;
+      }
+    }
+
+    .ant-input-textarea {
+      textarea {
+        resize: none;
+      }
+    }
+  }
 }
 
-.mb_20 {
-  margin-bottom: 20px;
+/* ============================================
+ * 🌊 Animations
+ * ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section 依次显示动画 */
+.trade-section {
+  animation: fadeIn 0.3s ease-out;
+
+  &:nth-child(1) {
+    animation-delay: 0.05s;
+  }
+
+  &:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+}
+
+/* ============================================
+ * 📱 Responsive Adjustments
+ * ============================================ */
+@media screen and (max-width: @breakpoint-lg) {
+  .tradePage {
+    padding: @spacing-md;
+
+    .trade-content {
+      padding: @spacing-lg;
+    }
+
+    .ant-col {
+      &:not(:last-child) {
+        margin-bottom: @spacing-md;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: @breakpoint-md) {
+  .tradePage {
+    padding: @spacing-sm;
+
+    .trade-filter {
+      .ant-space {
+        flex-wrap: wrap;
+
+        .ant-space-item {
+          flex: 1;
+          min-width: 120px;
+        }
+      }
+    }
+
+    .trade-content {
+      padding: @spacing-md;
+      border-radius: @radius-md;
+
+      .trade-section-title {
+        font-size: @font-size-md;
+      }
+    }
+
+    .ant-col {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+  }
 }

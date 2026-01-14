@@ -12,6 +12,10 @@ const router = [
     component: lazy(() => import(/* webpackChunkName:"home" */ "@/pages/home/home")),
   },
   {
+    path: '/trade',
+    component: lazy(() => import(/* webpackChunkName:"trade" */ "@/pages/trade/trade")),
+  },
+  {
     path: '/vite',
     component: lazy(() => import(/* webpackChunkName:"home" */ "@/pages/vite/vite")),
   },

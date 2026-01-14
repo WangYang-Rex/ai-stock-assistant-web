@@ -1,30 +1,20 @@
 import { post } from "./fetch";
-import type { Trading } from "@/@types/trading";
+import type {
+  Trading,
+  TradingInput,
+  TradingStats,
+  ApiResponse,
+  DeleteTradingResponse,
+  CleanOldDataResponse,
+} from "@/@types/trading";
 
-// ==================== 类型定义 ====================
-
-/**
- * 创建交易记录请求
- */
-interface CreateTradingRequest {
-  symbol?: string;
-  name?: string;
-  type?: "buy" | "sell";
-  tradingTime?: string;
-  quantity?: number;
-  price?: number;
-  fee?: number;
-  openPrice?: number;
-  changePercent?: number;
-  changeAmount?: number;
-  remarks?: string;
-}
+// ==================== 请求类型定义 ====================
 
 /**
  * 批量创建交易记录请求
  */
 interface BatchCreateTradingRequest {
-  tradingDataList: CreateTradingRequest[];
+  tradingDataList: TradingInput[];
 }
 
 /**
@@ -80,7 +70,7 @@ interface GetTradingStatsRequest {
  */
 interface UpdateTradingRequest {
   id: number;
-  updateData: CreateTradingRequest;
+  updateData: TradingInput;
 }
 
 /**
@@ -88,14 +78,6 @@ interface UpdateTradingRequest {
  */
 interface DeleteTradingRequest {
   id: number;
-}
-
-/**
- * 根据涨跌幅范围获取记录请求
- */
-interface GetTradingByChangePercentRangeRequest {
-  minChange: number;
-  maxChange: number;
 }
 
 /**
@@ -107,18 +89,24 @@ interface CleanOldDataRequest {
 
 // ==================== API 方法 ====================
 
+/**
+ * 交易记录 API
+ * 提供交易记录的增删改查等操作
+ */
 export const tradingApi = {
   /**
    * 创建交易记录
-   * 创建单个交易记录
+   * @param data 交易记录数据
+   * @returns 创建结果，包含成功标志、消息和交易记录数据
    */
-  create: (data: CreateTradingRequest): Promise<Trading> => {
-    return post<Trading>("/api/trading/create", data);
+  create: (data: TradingInput): Promise<ApiResponse<Trading>> => {
+    return post<ApiResponse<Trading>>("/api/trading/create", data);
   },
 
   /**
    * 批量创建交易记录
-   * 批量创建多个交易记录
+   * @param data 包含交易记录数据列表的对象
+   * @returns 创建的交易记录列表
    */
   createBatch: (data: BatchCreateTradingRequest): Promise<Trading[]> => {
     return post<Trading[]>("/api/trading/create-batch", data);
@@ -126,7 +114,8 @@ export const tradingApi = {
 
   /**
    * 获取所有交易记录
-   * 获取所有交易记录列表
+   * 按交易时间降序排列
+   * @returns 交易记录列表
    */
   list: (): Promise<Trading[]> => {
     return post<Trading[]>("/api/trading/list", {});
@@ -134,30 +123,28 @@ export const tradingApi = {
 
   /**
    * 根据股票代码获取交易记录
-   * 根据股票代码获取相关交易记录
+   * @param data 包含股票代码的查询条件
+   * @returns 该股票的交易记录列表
    */
-  getBySymbol: (
-    data: GetTradingBySymbolRequest
-  ): Promise<Trading[]> => {
+  getBySymbol: (data: GetTradingBySymbolRequest): Promise<Trading[]> => {
     return post<Trading[]>("/api/trading/get-by-symbol", data);
   },
 
   /**
    * 根据股票代码和时间范围获取交易记录
-   * 根据股票代码和时间范围获取相关交易记录
+   * @param data 包含股票代码、开始时间和结束时间的查询条件
+   * @returns 符合条件的交易记录列表
    */
   getBySymbolAndTime: (
     data: GetTradingBySymbolAndTimeRequest
   ): Promise<Trading[]> => {
-    return post<Trading[]>(
-      "/api/trading/get-by-symbol-and-time",
-      data
-    );
+    return post<Trading[]>("/api/trading/get-by-symbol-and-time", data);
   },
 
   /**
    * 根据交易类型获取记录
-   * 根据买入或卖出类型获取交易记录
+   * @param data 包含交易类型（买入/卖出）的查询条件
+   * @returns 该类型的交易记录列表
    */
   getByType: (data: GetTradingByTypeRequest): Promise<Trading[]> => {
     return post<Trading[]>("/api/trading/get-by-type", data);
@@ -165,7 +152,8 @@ export const tradingApi = {
 
   /**
    * 根据价格范围获取记录
-   * 根据价格范围获取交易记录
+   * @param data 包含最低价格和最高价格的查询条件
+   * @returns 价格在指定范围内的交易记录列表
    */
   getByPriceRange: (
     data: GetTradingByPriceRangeRequest
@@ -175,7 +163,8 @@ export const tradingApi = {
 
   /**
    * 获取最新交易记录
-   * 获取最新的交易记录
+   * @param data 可选的查询条件，包含股票代码和数量限制
+   * @returns 最新的交易记录列表
    */
   getLatest: (data?: GetLatestTradingRequest): Promise<Trading[]> => {
     return post<Trading[]>("/api/trading/get-latest", data || {});
@@ -183,15 +172,17 @@ export const tradingApi = {
 
   /**
    * 获取交易统计信息
-   * 获取交易相关的统计信息
+   * @param data 可选的统计条件，包含股票代码、开始时间和结束时间
+   * @returns 交易统计数据，包括总交易次数、总成交量、总金额等
    */
-  stats: (data?: GetTradingStatsRequest): Promise<any> => {
-    return post<any>("/api/trading/stats", data || {});
+  stats: (data?: GetTradingStatsRequest): Promise<TradingStats> => {
+    return post<TradingStats>("/api/trading/stats", data || {});
   },
 
   /**
    * 更新交易记录
-   * 更新指定的交易记录
+   * @param data 包含交易记录 ID 和更新数据的对象
+   * @returns 更新后的交易记录
    */
   update: (data: UpdateTradingRequest): Promise<Trading> => {
     return post<Trading>("/api/trading/update", data);
@@ -199,31 +190,19 @@ export const tradingApi = {
 
   /**
    * 删除交易记录
-   * 删除指定的交易记录
+   * @param data 包含交易记录 ID 的对象
+   * @returns 删除操作结果，包含成功标志
    */
-  delete: (data: DeleteTradingRequest): Promise<void> => {
-    return post<void>("/api/trading/delete", data);
-  },
-
-  /**
-   * 根据涨跌幅范围获取记录
-   * 根据涨跌幅范围获取交易记录
-   */
-  getByChangePercentRange: (
-    data: GetTradingByChangePercentRangeRequest
-  ): Promise<Trading[]> => {
-    return post<Trading[]>(
-      "/api/trading/get-by-change-percent-range",
-      data
-    );
+  delete: (data: DeleteTradingRequest): Promise<DeleteTradingResponse> => {
+    return post<DeleteTradingResponse>("/api/trading/delete", data);
   },
 
   /**
    * 清理过期数据
-   * 清理指定天数之前的过期交易数据
+   * @param data 可选的参数，指定保留最近 N 天的数据（默认 30 天）
+   * @returns 清理结果，包含已删除的记录数量和操作消息
    */
-  cleanOldData: (data?: CleanOldDataRequest): Promise<void> => {
-    return post<void>("/api/trading/clean-old-data", data || {});
+  cleanOldData: (data?: CleanOldDataRequest): Promise<CleanOldDataResponse> => {
+    return post<CleanOldDataResponse>("/api/trading/clean-old-data", data || {});
   },
 };
-

@@ -8,6 +8,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
+  SwapOutlined,
 } from '@ant-design/icons';
 import './LeftNewNav.less';
 
@@ -17,6 +18,12 @@ const menuMap = [
     label: '实时行情',
     route: '/',
     icon: <HomeOutlined />,
+  },
+  {
+    key: 'trade',
+    label: '实时交易',
+    route: '/trade',
+    icon: <SwapOutlined />,
   },
   {
     key: 'news',
@@ -39,30 +46,31 @@ const menuMap = [
 
 type MenuItem = Required<MenuProps>['items'][number];
 const LeftNewNav = (props: any) => {
-  
+
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
 
-  const items: MenuItem[] = menuMap.map((item) => {
-    return {
+  const items: MenuItem[] = [
+    ...menuMap.map((item) => ({
       key: item.key,
       label: item.label,
       icon: item.icon || <SettingOutlined />,
-    }
-  }).concat([{
-    key: 'sub1',
-    label: 'Navigation One',
-    icon: <SettingOutlined />,
-    children: [
-      { key: '1', label: 'Option 9' },
-      { key: '2', label: 'Option 10' },
-      { key: '3', label: 'Option 11' },
-      { key: '4', label: 'Option 12' },
-    ],
-  }])
+    })),
+    {
+      key: 'sub1',
+      label: 'Navigation One',
+      icon: <SettingOutlined />,
+      children: [
+        { key: '1', label: 'Option 9' },
+        { key: '2', label: 'Option 10' },
+        { key: '3', label: 'Option 11' },
+        { key: '4', label: 'Option 12' },
+      ],
+    },
+  ];
 
   const onClick: MenuProps['onClick'] = (e) => {
     console.log('click ', e);

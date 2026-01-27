@@ -7,7 +7,7 @@ import type { Stock } from "@/@types/stock";
  * 同步股票请求
  * POST /stocks/sync
  */
-interface SyncStockRequest {
+export interface SyncStockRequest {
   /** 股票代码（如 600519） */
   code: string;
   /** 市场代码（1-上交所、0-深交所） */
@@ -18,7 +18,7 @@ interface SyncStockRequest {
  * 删除股票请求
  * POST /stocks/delete
  */
-interface DeleteStockRequest {
+export interface DeleteStockRequest {
   /** 股票 ID */
   id: number;
 }
@@ -27,35 +27,38 @@ interface DeleteStockRequest {
  * 股票列表请求
  * POST /stocks/list
  */
-interface StockListRequest {
+export interface StockListRequest {
   /** 市场代码（可选，1-上交所、0-深交所） */
   market?: number;
   /** 市场类型（可选，SH-上海、SZ-深圳） */
   marketType?: string;
-  
-  // 分页参数 (Swagger 未定义但系统可能支持)
-  page?: number;
-  limit?: number;
 }
 
 /**
  * 根据代码获取股票请求
  * POST /stocks/get-by-code
  */
-interface GetStockByCodeRequest {
+export interface GetStockByCodeRequest {
   /** 股票代码 */
   code: string;
 }
 
 // ==================== Response Interfaces (Swagger Defined) ====================
 
-interface SyncStockResponseData {
+/**
+ * 同步股票响应数据
+ */
+export interface SyncStockResponseData {
+  /** 股票信息 */
   stock: Stock;
   /** 是否为新增股票（true-新增，false-已存在） */
   isNew: boolean;
 }
 
-interface DeleteStockResponseData {
+/**
+ * 删除股票响应数据
+ */
+export interface DeleteStockResponseData {
   /** 是否删除成功 */
   success: boolean;
 }
@@ -63,45 +66,33 @@ interface DeleteStockResponseData {
 // ==================== API Implementation ====================
 
 export const stockApi = {
-  // -------------------- Swagger Defined Methods --------------------
-
   /**
-   * 同步股票信息 (POST /stocks/sync)
+   * 同步股票信息 (POST /api/stocks/sync)
+   * 通过 API 获取股票最新信息，若数据库中不存在则新增，存在则更新
    */
   sync: (data: SyncStockRequest): Promise<SyncStockResponseData> => {
     return post<SyncStockResponseData>("/api/stocks/sync", data);
   },
 
   /**
-   * 获取股票列表 (POST /stocks/list)
-   * 优化：对返回数据进行简单的预处理或类型校验
+   * 获取股票列表 (POST /api/stocks/list)
+   * 支持按市场或市场类型筛选股票列表
    */
-  list: async (data?: StockListRequest): Promise<Stock[]> => {
-    const stocks = await post<Stock[]>("/api/stocks/list", data || {});
-    // 处理旧数据兼容逻辑（如果后端返回了新字段，我们也保留旧字段名的引用以防 UI 崩溃）
-    return (stocks || []).map(item => ({
-      ...item,
-      latestPrice: item.price,
-      changePercent: item.pct,
-      changeAmount: item.change,
-    }));
+  list: (data?: StockListRequest): Promise<Stock[]> => {
+    return post<Stock[]>("/api/stocks/list", data || {});
   },
 
   /**
-   * 根据股票代码获取股票 (POST /stocks/get-by-code)
+   * 根据股票代码获取股票 (POST /api/stocks/get-by-code)
+   * 根据唯一股票代码查询股票详细信息
    */
-  getByCode: async (data: GetStockByCodeRequest): Promise<Stock> => {
-    const stock = await post<Stock>("/api/stocks/get-by-code", data);
-    return {
-      ...stock,
-      latestPrice: stock.price,
-      changePercent: stock.pct,
-      changeAmount: stock.change,
-    };
+  getByCode: (data: GetStockByCodeRequest): Promise<Stock> => {
+    return post<Stock>("/api/stocks/get-by-code", data);
   },
 
   /**
-   * 删除股票 (POST /stocks/delete)
+   * 删除股票 (POST /api/stocks/delete)
+   * 根据 ID 删除指定的股票记录
    */
   delete: (data: DeleteStockRequest): Promise<DeleteStockResponseData> => {
     return post<DeleteStockResponseData>("/api/stocks/delete", data);

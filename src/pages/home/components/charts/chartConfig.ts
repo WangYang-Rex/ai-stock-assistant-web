@@ -5,7 +5,9 @@
  * 专业股票图表配色方案和通用配置
  */
 
+import dayjs from 'dayjs';
 import type { Quote } from '@/@types/quote';
+import type { Trend } from '@/@types/trend';
 
 // 专业股票软件配色方案
 export const CHART_COLORS = {
@@ -35,12 +37,19 @@ export const BREAK_GAP = '1%';
  * @param quoteList 行情数据列表
  * @param includeDayBreak 是否包含隔天间断（5日图需要）
  */
-export const getBreakData = (quoteList: Quote[], includeDayBreak = true) => {
+export const getBreakData = (quoteList: (Quote | Trend)[], includeDayBreak = true) => {
   const dateArr: string[] = [];
   // 遍历出所有日期，去重并排序
   quoteList.forEach(item => {
-    if (item.snapshotDate && !dateArr.includes(item.snapshotDate)) {
-      dateArr.push(item.snapshotDate);
+    let dateStr = '';
+    if ('updateTime' in item) {
+      dateStr = dayjs(item.updateTime * 1000).format('YYYY-MM-DD');
+    } else {
+      dateStr = dayjs(item.datetime).format('YYYY-MM-DD');
+    }
+    
+    if (!dateArr.includes(dateStr)) {
+      dateArr.push(dateStr);
     }
   });
   dateArr.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
@@ -66,24 +75,28 @@ export const getBreakData = (quoteList: Quote[], includeDayBreak = true) => {
   return breakDatas;
 };
 
+
 /**
  * 计算分时均价（成交额 / 成交量）
  */
-export const calculateAveragePrice = (quoteList: Quote[]) => {
+export const calculateAveragePrice = (quoteList: (Quote | Trend)[]) => {
   if (quoteList.length === 0) return [];
 
   let totalAmount = 0;
   let totalVolume = 0;
 
-  return quoteList.map((quote) => {
-    totalAmount += Number(quote.volumeAmount) || 0;
-    totalVolume += Number(quote.volume) || 0;
+  return quoteList.map((item) => {
+    totalAmount += Number(item.amount) || 0;
+    totalVolume += Number(item.volume) || 0;
 
-    const latestPrice = Number(quote.latestPrice) || 0;
-    const avgPrice = totalVolume > 0 ? totalAmount / totalVolume : latestPrice;
-    return [new Date(quote.snapshotTime).getTime(), avgPrice];
+    const price = Number(item.price) || 0;
+    const avgPrice = totalVolume > 0 ? totalAmount / totalVolume : price;
+    
+    const time = 'updateTime' in item ? item.updateTime * 1000 : dayjs(item.datetime).valueOf();
+    return [time, avgPrice];
   });
 };
+
 
 /**
  * 格式化成交量显示

@@ -7,11 +7,15 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Button, Radio, DatePicker } from 'antd';
+import { Button, Radio, message } from 'antd';
 import type { Stock } from '@/@types/stock';
 import { quotesApi } from '@/lib/server/quoteApi';
+import { trendsApi } from '@/lib/server/trendsApi';
+import { klinesApi } from '@/lib/server/klineApi';
 import dayjs from 'dayjs';
 import type { Quote } from '@/@types/quote';
+import type { Trend } from '@/@types/trend';
+import type { Kline } from '@/@types/kline';
 import { IntradayChart, FiveDayChart, CandlestickChart, CHART_COLORS, formatAmount } from './charts';
 
 // 图表类型
@@ -27,9 +31,9 @@ const getTodayKStartTime = (): string => {
   const today9am = dayjs().hour(9).minute(0).second(0).millisecond(0);
   
   if (now.isBefore(today9am)) {
-    return dayjs().subtract(1, 'day').format('YYYY-MM-DD 00:00:00');
+    return dayjs().subtract(1, 'day').startOf('day').format('YYYY-MM-DD HH:mm:ss');
   } else {
-    return dayjs().format('YYYY-MM-DD 00:00:00');
+    return dayjs().startOf('day').format('YYYY-MM-DD HH:mm:ss');
   }
 };
 
@@ -67,89 +71,115 @@ interface QuoteChartProps {
 const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
   const [refreshKey, setRefreshKey] = useState<string>(Date.now().toString());
   const [chartType, setChartType] = useState<ChartType>('todayK');
-  const [startTime, setStartTime] = useState<string>(getTodayKStartTime());
-  const [endTime, setEndTime] = useState<string>(dayjs().format('YYYY-MM-DD 23:59:59'));
-  const [quoteList, setQuoteList] = useState<Quote[]>([]);
+  const [dataList, setDataList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // 获取行情数据
-  const fetchQuoteList = useCallback(async (params?: { startTime: string; endTime: string }) => {
+  // 获取数据
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await quotesApi.list({
-        code: stock.code,
-        marketCode: stock.market?.toString() || '',
-        startTime: params?.startTime || startTime,
-        endTime: params?.endTime || endTime,
-        page: 1,
-        limit: 10000
-      });
+      const { startTime, endTime } = getTimeRange(chartType);
       
-      let quotes = res.quotes;
-      // 过滤交易时间内的数据 (09:30 - 15:00)
-      quotes = quotes.filter(it => {
-        const date = dayjs(it.snapshotTime).format('YYYY-MM-DD');
-        const time = new Date(it.snapshotTime).getTime();
-        return time >= new Date(`${date} 09:30:00`).getTime() && 
-               time <= new Date(`${date} 15:00:00`).getTime();
-      });
-      // 按时间排序
-      quotes.sort((a, b) => 
-        new Date(a.snapshotTime || '').getTime() - new Date(b.snapshotTime || '').getTime()
-      );
-      
-      setQuoteList(quotes);
+      if (chartType === 'todayK' || chartType === 'fiveDaysK') {
+        const ndays = chartType === 'todayK' ? 1 : 7;
+        const res = await trendsApi.list({
+          code: stock.code,
+          ndays,
+          limit: 2000 // 足够覆盖1-5天的数据
+        });
+        
+        let trends = res.trends;
+        // 分时数据通常不需要过滤，API应该已经返回正确范围，但可以根据需要排序
+        trends.sort((a, b) => dayjs(a.datetime).unix() - dayjs(b.datetime).unix());
+        setDataList(trends);
+      } else if (chartType === 'dailyK') {
+        const res = await klinesApi.list({
+          code: stock.code,
+          period: 101, // 日线
+          limit: 10000,
+          orderBy: 'ASC'
+        });
+        setDataList(res.data);
+      }
     } catch (error) {
-      console.error('获取行情数据失败:', error);
+      console.error('获取图表数据失败:', error);
     } finally {
       setLoading(false);
     }
-  }, [stock.code, stock.market, startTime, endTime]);
+  }, [stock.code, chartType]);
 
-  // 同步最新行情
+  // 同步最新数据
   const handleRefresh = async () => {
+    setLoading(true);
     try {
-      await quotesApi.syncStockQuotesFromAPI({
-        code: stock.code,
-        marketCode: stock.market?.toString() || '',
-      });
+      if (chartType === 'todayK' || chartType === 'fiveDaysK') {
+        await trendsApi.syncFromApi({
+          code: stock.code,
+          market: Number(stock.market) || 1,
+          ndays: chartType === 'todayK' ? 1 : 5
+        });
+      } else {
+        await klinesApi.sync({
+          code: stock.code,
+          period: 'daily'
+        });
+      }
+      message.success('同步成功');
       setRefreshKey(Date.now().toString());
-      await fetchQuoteList();
+      await fetchData();
     } catch (error) {
-      console.error('同步行情失败:', error);
+      console.error('同步失败:', error);
+      message.error('同步失败');
+    } finally {
+      setLoading(false);
     }
   };
 
   // 切换图表类型
   const handleTypeChange = (type: ChartType) => {
-    const { startTime: newStart, endTime: newEnd } = getTimeRange(type);
-    setStartTime(newStart);
-    setEndTime(newEnd);
     setChartType(type);
-    fetchQuoteList({ startTime: newStart, endTime: newEnd });
   };
 
-  // 首次加载
+  // 加载数据
   useEffect(() => {
-    fetchQuoteList();
-  }, [stock]);
+    fetchData();
+  }, [fetchData]);
 
   // 计算汇总数据
-  const latestQuote = quoteList[quoteList.length - 1];
-  const previousClose = Number(quoteList[0]?.previousClosePrice) || Number(quoteList[0]?.openPrice) || 0;
-  const latestPrice = Number(latestQuote?.latestPrice) || previousClose || 0;
-  const priceChange = latestPrice - previousClose;
-  const changePercent = previousClose ? (priceChange / previousClose) * 100 : 0;
-  const totalVolume = quoteList.reduce((sum, q) => sum + (Number(q.volume) || 0), 0);
-  const totalAmount = quoteList.reduce((sum, q) => sum + (Number(q.volumeAmount) || 0), 0);
+  const latestItem = dataList[dataList.length - 1];
+  const firstItem = dataList[0];
+  
+  let previousClose = 0;
+  let priceVal = 0;
+  let totalVolume = 0;
+  let totalAmount = 0;
+  let changePercentVal = 0;
 
-  const priceColor = Math.abs(priceChange) < 0.01 
+  if (latestItem) {
+    if ('datetime' in latestItem) { // Trend
+      priceVal = Number(latestItem.price) || 0;
+      changePercentVal = Number(latestItem.pct) || 0;
+      previousClose = priceVal / (1 + changePercentVal / 100);
+      totalVolume = dataList.reduce((sum, q) => sum + (Number(q.volume) || 0), 0);
+      totalAmount = dataList.reduce((sum, q) => sum + (Number(q.amount) || 0), 0);
+    } else if ('date' in latestItem && 'open' in latestItem) { // Kline
+      priceVal = Number(latestItem.close) || 0;
+      changePercentVal = Number(latestItem.pct) || 0;
+      previousClose = priceVal - (Number(latestItem.change) || 0);
+      totalVolume = Number(latestItem.volume) || 0;
+      totalAmount = Number(latestItem.amount) || 0;
+    }
+  }
+
+  const priceChangeVal = priceVal - previousClose;
+
+  const priceColor = Math.abs(priceChangeVal) < 0.01 
     ? CHART_COLORS.flat 
-    : priceChange > 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
+    : priceChangeVal > 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
 
   // 渲染对应的图表组件
   const renderChart = () => {
-    if (quoteList.length === 0) {
+    if (dataList.length === 0) {
       return (
         <div style={{ 
           height: 400, 
@@ -165,20 +195,20 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
 
     switch (chartType) {
       case 'todayK':
-        return <IntradayChart quoteList={quoteList} />;
+        return <IntradayChart quoteList={dataList} />;
       case 'fiveDaysK':
-        return <FiveDayChart quoteList={quoteList} />;
+        return <FiveDayChart quoteList={dataList} />;
       case 'dailyK':
-        return <CandlestickChart quoteList={quoteList} />;
+        return <CandlestickChart quoteList={dataList} />;
       default:
-        return <IntradayChart quoteList={quoteList} />;
+        return <IntradayChart quoteList={dataList} />;
     }
   };
 
   return (
     <div className="stock-content-chart" key={refreshKey}>
       {/* 股票信息栏 */}
-      {quoteList.length > 0 && (
+      {dataList.length > 0 && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -197,7 +227,7 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
               color: priceColor,
               marginLeft: '8px'
             }}>
-              {latestPrice.toFixed(2)}
+              {priceVal.toFixed(2)}
             </span>
           </div>
           <div>
@@ -208,7 +238,7 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
               color: priceColor,
               marginLeft: '8px'
             }}>
-              {priceChange > 0 ? '+' : ''}{priceChange.toFixed(2)}
+              {priceChangeVal > 0 ? '+' : ''}{priceChangeVal.toFixed(2)}
             </span>
           </div>
           <div>
@@ -219,7 +249,7 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
               color: priceColor,
               marginLeft: '8px'
             }}>
-              {changePercent > 0 ? '+' : ''}{changePercent.toFixed(2)}%
+              {changePercentVal > 0 ? '+' : ''}{changePercentVal.toFixed(2)}%
             </span>
           </div>
           <div>
@@ -245,19 +275,6 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
 
       {/* 工具栏 */}
       <div className="mb_12 t-FBH">
-        <DatePicker.RangePicker
-          className="mr_12"
-          value={[dayjs(startTime), dayjs(endTime)]}
-          onChange={(value) => {
-            if (value && value[0] && value[1]) {
-              const newStart = value[0].format('YYYY-MM-DD 00:00:00');
-              const newEnd = value[1].format('YYYY-MM-DD 23:59:59');
-              setStartTime(newStart);
-              setEndTime(newEnd);
-              fetchQuoteList({ startTime: newStart, endTime: newEnd });
-            }
-          }}
-        />
         <Radio.Group
           style={{ width: '300px' }}
           optionType="button"

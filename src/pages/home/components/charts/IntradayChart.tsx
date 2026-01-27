@@ -1,18 +1,8 @@
-/**
- * ============================================
- * IntradayChart - 分时图组件
- * ============================================
- * 显示当日分时走势，包含：
- * - 分时价格线
- * - 分时均价线
- * - 成交量柱状图
- * - 昨收价基准线
- */
-
 import React, { useLayoutEffect, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
 import echarts from '@/lib/echartUtil';
 import type { Quote } from '@/@types/quote';
+import type { Trend } from '@/@types/trend';
 import { 
   CHART_COLORS, 
   getBreakData, 
@@ -23,7 +13,7 @@ import {
 } from './chartConfig';
 
 interface IntradayChartProps {
-  quoteList: Quote[];
+  quoteList: (Quote | Trend)[];
 }
 
 /**
@@ -37,54 +27,66 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
       return;
     }
 
-    const previousClose = Number(quoteList[0]?.previousClosePrice) || Number(quoteList[0]?.openPrice) || 0;
+    // 获取昨收价作为基准
+    let previousClose = 0;
+    const first = quoteList[0];
+    if ('preClose' in first && first.preClose) {
+      previousClose = Number(first.preClose);
+    } else if ('pct' in first) {
+      // 从 Trend 计算: preClose = price / (1 + pct/100)
+      previousClose = Number(first.price) / (1 + (Number(first.pct) || 0) / 100);
+    } else if ('open' in first) {
+      previousClose = Number(first.open);
+    }
+
     const breakData = getBreakData(quoteList, false); // 单日不需要隔天间断
 
     // 分时价格数据
-    const priceData = quoteList.map(it => [
-      new Date(it.snapshotTime).getTime(), 
-      Number(it.latestPrice) || 0
-    ]);
+    const priceData = quoteList.map(it => {
+      const time = 'updateTime' in it ? it.updateTime * 1000 : dayjs(it.datetime).valueOf();
+      return [time, Number(it.price) || 0];
+    });
 
     // 分时均价数据
     const avgPriceData = calculateAveragePrice(quoteList);
 
     // 成交量数据 - 红绿柱
     const volumeData = quoteList.map((it, index) => {
-      const latestPrice = Number(it.latestPrice) || 0;
+      const time = 'updateTime' in it ? it.updateTime * 1000 : dayjs(it.datetime).valueOf();
+      const currentPrice = Number(it.price) || 0;
       const currentVolume = Number(it.volume) || 0;
       
       let priceDirection = 0;
       if (index > 0) {
-        const prevPrice = Number(quoteList[index - 1].latestPrice) || 0;
-        priceDirection = latestPrice > prevPrice ? 1 : latestPrice < prevPrice ? -1 : 0;
+        const prevPrice = Number(quoteList[index - 1].price) || 0;
+        priceDirection = currentPrice > prevPrice ? 1 : currentPrice < prevPrice ? -1 : 0;
       } else {
-        priceDirection = latestPrice >= previousClose ? 1 : -1;
+        priceDirection = currentPrice >= previousClose ? 1 : -1;
       }
       
-      return [new Date(it.snapshotTime).getTime(), currentVolume, priceDirection];
+      return [time, currentVolume, priceDirection];
     });
 
     // 计算Y轴对称范围（以昨收价为中心）
-    const allPrices = quoteList.map(q => Number(q.latestPrice) || 0).filter(p => p > 0);
+    const allPrices = quoteList.map(q => Number(q.price) || 0).filter(p => p > 0);
     const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : previousClose;
     const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : previousClose;
     
     const maxChangePercent = Math.max(
-      Math.abs((maxPrice - previousClose) / previousClose),
-      Math.abs((minPrice - previousClose) / previousClose)
+      Math.abs((maxPrice - previousClose) / (previousClose || 1)),
+      Math.abs((minPrice - previousClose) / (previousClose || 1))
     );
     
-    const yAxisMin = previousClose * (1 - maxChangePercent * 1.1);
-    const yAxisMax = previousClose * (1 + maxChangePercent * 1.1);
+    const yAxisMin = previousClose * (1 - (maxChangePercent || 0.01) * 1.1);
+    const yAxisMax = previousClose * (1 + (maxChangePercent || 0.01) * 1.1);
 
     // 获取涨跌状态
-    const latestPrice = Number(quoteList[quoteList.length - 1]?.latestPrice) || previousClose;
-    const isRising = latestPrice >= previousClose;
+    const latestPriceVal = Number(quoteList[quoteList.length - 1]?.price) || previousClose;
+    const isRising = latestPriceVal >= previousClose;
 
     // 最高/最低点
-    const highPrice = Math.max(...allPrices);
-    const lowPrice = Math.min(...allPrices);
+    const highPriceVal = Math.max(...allPrices);
+    const lowPriceVal = Math.min(...allPrices);
 
     const option = {
       backgroundColor: CHART_COLORS.bg,
@@ -100,14 +102,14 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
             if (param.seriesName === '价格') {
               const price = param.value[1];
               const change = price - previousClose;
-              const changePercent = (change / previousClose) * 100;
-              const color = changePercent > 0 ? CHART_COLORS.rise : changePercent < 0 ? CHART_COLORS.fall : CHART_COLORS.flat;
-              const sign = changePercent > 0 ? '+' : '';
+              const changePct = previousClose ? (change / previousClose) * 100 : 0;
+              const color = changePct > 0 ? CHART_COLORS.rise : changePct < 0 ? CHART_COLORS.fall : CHART_COLORS.flat;
+              const sign = changePct > 0 ? '+' : '';
               result += `<div style="margin-top: 6px; display: flex; justify-content: space-between;">
                 <span style="color: ${CHART_COLORS.textSecondary};">价格</span>
                 <span>
                   <span style="color:${color};font-weight:bold;">${price.toFixed(2)}</span>
-                  <span style="color:${color};margin-left:8px;font-size:12px;">${sign}${changePercent.toFixed(2)}%</span>
+                  <span style="color:${color};margin-left:8px;font-size:12px;">${sign}${changePct.toFixed(2)}%</span>
                 </span>
               </div>`;
             } else if (param.seriesName === '均价') {
@@ -202,11 +204,11 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
           axisLabel: {
             fontSize: 11,
             color: (value: number) => {
-              const pct = ((value - previousClose) / previousClose) * 100;
+              const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return Math.abs(pct) < 0.01 ? CHART_COLORS.flat : pct > 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
             },
             formatter: (value: number) => {
-              const pct = ((value - previousClose) / previousClose) * 100;
+              const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
             },
             margin: 8
@@ -247,8 +249,8 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
             symbolSize: 6,
             label: { show: true, fontSize: 10, formatter: '{c}', offset: [0, -10] },
             data: [
-              { name: '最高', value: highPrice.toFixed(2), coord: [priceData.find((p: any) => p[1] === highPrice)?.[0], highPrice], itemStyle: { color: CHART_COLORS.rise }, label: { color: CHART_COLORS.rise } },
-              { name: '最低', value: lowPrice.toFixed(2), coord: [priceData.find((p: any) => p[1] === lowPrice)?.[0], lowPrice], itemStyle: { color: CHART_COLORS.fall }, label: { color: CHART_COLORS.fall } }
+              { name: '最高', value: highPriceVal.toFixed(2), coord: [priceData.find((p: any) => p[1] === highPriceVal)?.[0], highPriceVal], itemStyle: { color: CHART_COLORS.rise }, label: { color: CHART_COLORS.rise } },
+              { name: '最低', value: lowPriceVal.toFixed(2), coord: [priceData.find((p: any) => p[1] === lowPriceVal)?.[0], lowPriceVal], itemStyle: { color: CHART_COLORS.fall }, label: { color: CHART_COLORS.fall } }
             ]
           }
         },

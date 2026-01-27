@@ -9,8 +9,9 @@ const getBreakData = (quoteList: Quote[]) => {
   const dateArr: string[] = [];
   // 遍历出 quoteList 所有的日期，去重，并排序
   quoteList.forEach(item => {
-    if (item.snapshotDate && !dateArr.includes(item.snapshotDate)) {
-      dateArr.push(item.snapshotDate);
+    const dateStr = dayjs(item.updateTime * 1000).format('YYYY-MM-DD');
+    if (!dateArr.includes(dateStr)) {
+      dateArr.push(dateStr);
     }
   });
   dateArr.sort((a, b) => {
@@ -37,25 +38,27 @@ const QuoteTodayk = (props: { stock: Stock }) => {
   }, [stock]);
 
   const getQuoteList = async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayjs();
+    const startTime = today.startOf('day').unix();
+    const endTime = today.endOf('day').unix();
+    
     const params = {
       code: stock.code,
-      marketCode: stock.market?.toString() || '',
-      "startTime": `${today} 09:30:00`, // '2025-11-10 00:00:00', // 
-      "endTime": `${today} 23:59:59`, // '2025-11-10 23:59:59', //
-      "page": 1,
-      "limit": 1000
+      startTime,
+      endTime,
+      page: 1,
+      limit: 1000
     }
     const res = await quotesApi.list(params);
     let newQuoteList = res.quotes;
+    
     // 过滤出 09:30之后的 和 15:00之前的
     newQuoteList = newQuoteList.filter(it => {
-      const todayStr = dayjs(it.snapshotTime).format('YYYY-MM-DD');
-      return new Date(it.snapshotTime).getTime() >= new Date(`${todayStr} 09:30:00`).getTime() && new Date(it.snapshotTime).getTime() <= new Date(`${todayStr} 15:00:00`).getTime();
+      const timeStr = dayjs(it.updateTime * 1000).format('HH:mm:ss');
+      return timeStr >= '09:30:00' && timeStr <= '15:00:00';
     });
-    newQuoteList.sort((a, b) => {
-      return new Date(a.snapshotTime).getTime() - new Date(b.snapshotTime).getTime();
-    });
+    
+    newQuoteList.sort((a, b) => a.updateTime - b.updateTime);
     setQuoteList(newQuoteList);
   }
   const chartRef = useRef<HTMLDivElement>(null);
@@ -73,24 +76,16 @@ const QuoteTodayk = (props: { stock: Stock }) => {
     const formatTime = echarts.time.format;
     const breakData = getBreakData(quoteList);
     const seriesData = quoteList.map(it => {
-      return [new Date(it.snapshotTime).getTime(), it.latestPrice]
+      return [it.updateTime * 1000, it.price]
     });
     const option = {
-      // Choose axis ticks based on UTC time.
-      // useUTC: true,
-      // title: {
-      //   text: 'Intraday Chart with Breaks (Single Day)',
-      //   left: 'center'
-      // },
       tooltip: {
         show: true,
         trigger: 'axis'
       },
-      // 网格配置 - 调整图表边距
       grid: {
         left: '3%',
         right: '4%',
-        // bottom: '15%',
         top: '10%',
         containLabel: true,
         show: true,
@@ -103,33 +98,20 @@ const QuoteTodayk = (props: { stock: Stock }) => {
           axisLabel: {
             showMinLabel: true,
             showMaxLabel: true,
-            formatter: (value, index, extra) => {
+            formatter: (value: number, _index: number, extra: any) => {
               if (!extra || !extra.break) {
                 return dayjs(value).format('HH:mm');
-                // The third parameter is `useUTC: true`.
-                return formatTime(value, '{HH}:{mm}', true);
               }
-              // Only render the label on break start, but not on break end.
               if (extra.break.type === 'start') {
-
-                return dayjs(extra.break.start,).format('HH:mm') + '/' + dayjs(extra.break.end).format('HH:mm');
+                return dayjs(extra.break.start).format('HH:mm') + '/' + dayjs(extra.break.end).format('HH:mm');
               }
               return '';
             }
           },
           breakLabelLayout: {
-            // Disable auto move of break labels if overlapping,
-            // and use `axisLabel.formatter` to control the label display.
             moveOverlap: false
           },
           breaks: breakData,
-          // breaks: [
-          //   {
-          //     start: _data.breakStart,
-          //     end: _data.breakEnd,
-          //     gap: 0
-          //   }
-          // ],
           breakArea: {
             expandOnClick: false,
             zigzagAmplitude: 0,
@@ -141,22 +123,11 @@ const QuoteTodayk = (props: { stock: Stock }) => {
         type: 'value',
         min: 'dataMin'
       },
-      // dataZoom: [
-      //   {
-      //     type: 'inside',
-      //     xAxisIndex: 0
-      //   },
-      //   {
-      //     type: 'slider',
-      //     xAxisIndex: 0
-      //   }
-      // ],
       series: [
         {
           type: 'line',
           symbolSize: 0,
           data: seriesData,
-          // data: _data.seriesData
         }
       ]
     };

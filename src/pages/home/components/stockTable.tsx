@@ -3,15 +3,6 @@ import { Space, Table, Popconfirm } from 'antd';
 import type { TableProps } from 'antd';
 import type { Stock } from '@/@types/stock';
 import { stockApi } from '@/lib/server/stockApi';
-import { formatPercent } from '@/lib/amountUtil';
-
-interface DataType {
-  key: string;
-  name: string;
-  age: number;
-  address: string;
-  tags: string[];
-}
 
 /**
  * StockTable 组件属性
@@ -43,7 +34,7 @@ const StockTable: React.FC<StockTableProps> = ({
 
   /** 更新股票数据 */
   const updateStockData = async (record: Stock) => {
-    const res = await stockApi.sync({
+    await stockApi.sync({
       code: record.code,
       market: record.market || 1,
     });
@@ -54,43 +45,33 @@ const StockTable: React.FC<StockTableProps> = ({
 
   const columns: TableProps['columns'] =[
     {
-      title: 'code',
-      dataIndex: 'code',
-      key: 'code',
-      render: (value: any, record: any, index: number) => {
-        return <a>{record.name} - {value}</a>
+      title: '股票名称',
+      dataIndex: 'name',
+      key: 'name',
+      render: (value: any, record: any) => {
+        return <a>{value} - {record.code}</a>
       },
     },
     {
       title: '最新价',
-      dataIndex: 'latestPrice',
-      key: 'latestPrice',
-      render: (value: any, record: any, index: number) => {
-        let textColor = '';
-        if (record.latestPrice) {
-          if (record.latestPrice > 0) {
-            textColor = 'text-color-red'
-          } else {
-            textColor = 'text-color-green'
-          }
-        }
-        return <a className={textColor}>{parseFloat(record.latestPrice || 0).toFixed(3)}</a>
+      dataIndex: 'price',
+      key: 'price',
+      render: (value: any) => {
+        const price = parseFloat(value || 0);
+        return <a className={price > 0 ? 'text-color-red' : 'text-color-green'}>
+          {price.toFixed(3)}
+        </a>
       },
     },
     {
       title: '今日涨跌幅',
-      dataIndex: 'changePercent',
-      key: 'changePercent',
-      render: (value: any, record: any, index: number) => {
-        let textColor = '';
-        if (record.changePercent) {
-          if (record.changePercent > 0) {
-            textColor = 'text-color-red'
-           } else {
-            textColor = 'text-color-green'
-          }
-        }
-        return <a className={textColor}>{parseFloat(record.changePercent || 0).toFixed(2)}%</a>
+      dataIndex: 'pct',
+      key: 'pct',
+      render: (value: any) => {
+        const pct = parseFloat(value || 0);
+        return <a className={pct > 0 ? 'text-color-red' : 'text-color-green'}>
+          {pct.toFixed(2)}%
+        </a>
       },
     },
     {
@@ -98,7 +79,7 @@ const StockTable: React.FC<StockTableProps> = ({
       dataIndex: 'action',
       key: 'action',
       width: 200,
-      render: (value: any, record: any, index: number) => {
+      render: (_: any, record: any) => {
         return (
           <Space size="middle">
             <a onClick={() => { updateStockData(record) }}>更新</a>
@@ -115,7 +96,6 @@ const StockTable: React.FC<StockTableProps> = ({
                 <a style={{ color: '#ff4d4f' }}>删除</a>
               </Popconfirm>
             )}
-            {/* <a onClick={ ()=> { updateHolding(record) }}>更新持仓</a> */}
           </Space>
         )
       },

@@ -1,28 +1,18 @@
-/**
- * ============================================
- * FiveDayChart - 5日分时图组件
- * ============================================
- * 显示近5个交易日的分时走势，特点：
- * - 横跨多日的价格走势
- * - 日期分隔显示
- * - 每日开盘/收盘时间标注
- */
-
 import React, { useLayoutEffect, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
 import echarts from '@/lib/echartUtil';
 import type { Quote } from '@/@types/quote';
+import type { Trend } from '@/@types/trend';
 import { 
   CHART_COLORS, 
   getBreakData,
   formatVolume,
   getBaseTooltipConfig,
-  getDualGridConfig,
-  BREAK_GAP
+  getDualGridConfig
 } from './chartConfig';
 
 interface FiveDayChartProps {
-  quoteList: Quote[];
+  quoteList: (Quote | Trend)[];
 }
 
 /**
@@ -36,47 +26,54 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
       return;
     }
 
-    // 获取第一天的昨收价作为基准
-    const previousClose = Number(quoteList[0]?.previousClosePrice) || Number(quoteList[0]?.openPrice) || 0;
+    // 获取基准昨收价（如果是多日图，通常以第一天的昨收价为基准线，或者不显基准线）
+    let previousClose = 0;
+    const first = quoteList[0];
+    if ('preClose' in first && first.preClose) {
+      previousClose = Number(first.preClose);
+    } else if ('pct' in first) {
+      previousClose = Number(first.price) / (1 + (Number(first.pct) || 0) / 100);
+    } else if ('open' in first) {
+      previousClose = Number(first.open);
+    }
+
     const breakData = getBreakData(quoteList, true); // 包含隔天间断
 
     // 价格数据
-    const priceData = quoteList.map(it => [
-      new Date(it.snapshotTime).getTime(), 
-      Number(it.latestPrice) || 0
-    ]);
+    const priceData = quoteList.map(it => {
+      const time = 'updateTime' in it ? it.updateTime * 1000 : dayjs(it.datetime).valueOf();
+      return [time, Number(it.price) || 0];
+    });
 
     // 成交量数据
     const volumeData = quoteList.map((it, index) => {
-      const latestPrice = Number(it.latestPrice) || 0;
+      const time = 'updateTime' in it ? it.updateTime * 1000 : dayjs(it.datetime).valueOf();
+      const currentPrice = Number(it.price) || 0;
       const currentVolume = Number(it.volume) || 0;
       
       let priceDirection = 0;
       if (index > 0) {
-        const prevPrice = Number(quoteList[index - 1].latestPrice) || 0;
-        priceDirection = latestPrice > prevPrice ? 1 : latestPrice < prevPrice ? -1 : 0;
+        const prevPrice = Number(quoteList[index - 1].price) || 0;
+        priceDirection = currentPrice > prevPrice ? 1 : currentPrice < prevPrice ? -1 : 0;
       } else {
-        priceDirection = latestPrice >= previousClose ? 1 : -1;
+        priceDirection = currentPrice >= previousClose ? 1 : -1;
       }
       
-      return [new Date(it.snapshotTime).getTime(), currentVolume, priceDirection];
+      return [time, currentVolume, priceDirection];
     });
 
-    // 提取所有交易日
-    const tradingDays = [...new Set(quoteList.map(q => q.snapshotDate))].sort();
-
     // 计算Y轴范围
-    const allPrices = quoteList.map(q => Number(q.latestPrice) || 0).filter(p => p > 0);
+    const allPrices = quoteList.map(q => Number(q.price) || 0).filter(p => p > 0);
     const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : previousClose;
     const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : previousClose;
     
     const priceRange = maxPrice - minPrice;
-    const yAxisMin = minPrice - priceRange * 0.05;
-    const yAxisMax = maxPrice + priceRange * 0.05;
+    const yAxisMin = minPrice - (priceRange || 0.1) * 0.05;
+    const yAxisMax = maxPrice + (priceRange || 0.1) * 0.05;
 
     // 判断整体涨跌
-    const latestPrice = Number(quoteList[quoteList.length - 1]?.latestPrice) || previousClose;
-    const isRising = latestPrice >= previousClose;
+    const latestPriceVal = Number(quoteList[quoteList.length - 1]?.price) || previousClose;
+    const isRising = latestPriceVal >= previousClose;
 
     const option = {
       backgroundColor: CHART_COLORS.bg,
@@ -92,14 +89,14 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
             if (param.seriesName === '价格') {
               const price = param.value[1];
               const change = price - previousClose;
-              const changePercent = (change / previousClose) * 100;
-              const color = changePercent > 0 ? CHART_COLORS.rise : changePercent < 0 ? CHART_COLORS.fall : CHART_COLORS.flat;
-              const sign = changePercent > 0 ? '+' : '';
+              const changePct = previousClose ? (change / previousClose) * 100 : 0;
+              const color = changePct > 0 ? CHART_COLORS.rise : changePct < 0 ? CHART_COLORS.fall : CHART_COLORS.flat;
+              const sign = changePct > 0 ? '+' : '';
               result += `<div style="margin-top: 6px; display: flex; justify-content: space-between;">
                 <span style="color: ${CHART_COLORS.textSecondary};">价格</span>
                 <span>
                   <span style="color:${color};font-weight:bold;">${price.toFixed(2)}</span>
-                  <span style="color:${color};margin-left:8px;font-size:12px;">${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)</span>
+                  <span style="color:${color};margin-left:8px;font-size:12px;">${sign}${change.toFixed(2)} (${sign}${changePct.toFixed(2)}%)</span>
                 </span>
               </div>`;
             } else if (param.seriesName === '成交量') {
@@ -128,7 +125,7 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
             fontSize: 11,
             margin: 8,
             hideOverlap: true,
-            formatter: (value: number, index: number, extra: any) => {
+            formatter: (value: number, _index: number, extra: any) => {
               const time = dayjs(value);
               const hour = time.hour();
               const minute = time.minute();
@@ -189,11 +186,11 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
           axisLabel: {
             fontSize: 11,
             color: (value: number) => {
-              const pct = ((value - previousClose) / previousClose) * 100;
+              const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return Math.abs(pct) < 0.01 ? CHART_COLORS.flat : pct > 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
             },
             formatter: (value: number) => {
-              const pct = ((value - previousClose) / previousClose) * 100;
+              const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
             },
             margin: 8

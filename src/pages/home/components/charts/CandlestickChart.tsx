@@ -13,6 +13,7 @@ import React, { useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import echarts from '@/lib/echartUtil';
 import type { Quote } from '@/@types/quote';
+import type { Kline } from '@/@types/kline';
 import { 
   CHART_COLORS,
   formatVolume,
@@ -20,13 +21,30 @@ import {
 } from './chartConfig';
 
 interface CandlestickChartProps {
-  quoteList: Quote[];
+  quoteList: (Quote | Kline)[];
 }
 
 /**
- * 将分时数据聚合为日K数据
+ * 将数据转换为统一的日K格式
  */
-const aggregateToDailyData = (quoteList: Quote[]) => {
+const processToDailyData = (list: (Quote | Kline)[]) => {
+  if (list.length === 0) return [];
+
+  // 判断是否已经是 Kline 格式 (包含 date 字段)
+  if ('date' in list[0]) {
+    return (list as Kline[]).map(k => ({
+      date: k.date,
+      open: Number(k.open) || 0,
+      close: Number(k.close) || 0,
+      high: Number(k.high) || 0,
+      low: Number(k.low) || 0,
+      volume: Number(k.volume) || 0,
+      amount: Number(k.amount) || 0
+    }));
+  }
+
+  // 否则按照 Quote 数据聚合 (分时聚合为日线)
+  const quoteList = list as Quote[];
   const dailyMap = new Map<string, {
     date: string;
     open: number;
@@ -38,10 +56,10 @@ const aggregateToDailyData = (quoteList: Quote[]) => {
   }>();
 
   quoteList.forEach(quote => {
-    const date = quote.snapshotDate || dayjs(quote.snapshotTime).format('YYYY-MM-DD');
-    const price = Number(quote.latestPrice) || 0;
+    const date = dayjs(quote.updateTime * 1000).format('YYYY-MM-DD');
+    const price = Number(quote.price) || 0;
     const volume = Number(quote.volume) || 0;
-    const amount = Number(quote.volumeAmount) || 0;
+    const amount = Number(quote.amount) || 0;
 
     if (!dailyMap.has(date)) {
       dailyMap.set(date, {
@@ -93,8 +111,8 @@ const calculateMA = (data: any[], period: number) => {
 const CandlestickChart: React.FC<CandlestickChartProps> = ({ quoteList }) => {
   const chartRef = useRef<HTMLDivElement>(null);
 
-  // 聚合日K数据
-  const dailyData = useMemo(() => aggregateToDailyData(quoteList), [quoteList]);
+  // 转换/获取日K数据
+  const dailyData = useMemo(() => processToDailyData(quoteList), [quoteList]);
 
   const chartInit = useCallback(() => {
     if (!chartRef.current || dailyData.length === 0) {
@@ -141,10 +159,10 @@ const CandlestickChart: React.FC<CandlestickChartProps> = ({ quoteList }) => {
           const day = dailyData[dataIndex];
           if (!day) return '';
           
-          const change = day.close - day.open;
-          const changePercent = day.open ? (change / day.open) * 100 : 0;
-          const color = change >= 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
-          const sign = change >= 0 ? '+' : '';
+          const changeVal = day.close - day.open;
+          const changePercent = day.open ? (changeVal / day.open) * 100 : 0;
+          const color = changeVal >= 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
+          const sign = changeVal >= 0 ? '+' : '';
           
           let result = `<div style="margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid ${CHART_COLORS.grid}; padding-bottom: 6px;">${day.date}</div>`;
           
@@ -153,7 +171,7 @@ const CandlestickChart: React.FC<CandlestickChartProps> = ({ quoteList }) => {
           result += `<span style="color:${CHART_COLORS.textSecondary}">收盘</span><span style="color:${color};font-weight:bold">${day.close.toFixed(2)}</span>`;
           result += `<span style="color:${CHART_COLORS.textSecondary}">最高</span><span style="color:${CHART_COLORS.rise}">${day.high.toFixed(2)}</span>`;
           result += `<span style="color:${CHART_COLORS.textSecondary}">最低</span><span style="color:${CHART_COLORS.fall}">${day.low.toFixed(2)}</span>`;
-          result += `<span style="color:${CHART_COLORS.textSecondary}">涨跌</span><span style="color:${color}">${sign}${change.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)</span>`;
+          result += `<span style="color:${CHART_COLORS.textSecondary}">涨跌</span><span style="color:${color}">${sign}${changeVal.toFixed(2)} (${sign}${changePercent.toFixed(2)}%)</span>`;
           result += `<span style="color:${CHART_COLORS.textSecondary}">成交量</span><span>${formatVolume(day.volume)}</span>`;
           result += `</div>`;
           

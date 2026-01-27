@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Space, Table, Tag } from 'antd';
+import { Space, Table, Popconfirm } from 'antd';
 import type { TableProps } from 'antd';
 import type { Stock } from '@/@types/stock';
 import { stockApi } from '@/lib/server/stockApi';
@@ -13,31 +13,22 @@ interface DataType {
   tags: string[];
 }
 
-/** 获取持仓总市值 */
-// const getHoldingAmount = (record: Stock) => {
-//   const { holdingQuantity = 0, holdingCost = 0, latestPrice = 0 } = record;
-//   return latestPrice * holdingQuantity;
-// }
-/** 持仓总成本 */
-// const getHoldingCost = (record: Stock) => {
-//   const { holdingQuantity = 0, holdingCost = 0, latestPrice = 0 } = record;
-//   return holdingCost * holdingQuantity;
-// }
-/** 持仓浮盈/亏损 */
-// const getHoldingChangeAmount = (record: Stock) => {
-//   const holdingAmount = getHoldingAmount(record);
-//   const holdingCost = getHoldingCost(record);
-//   return holdingAmount - holdingCost;
-// }
-/** 持仓浮盈/亏损百分比 */
-// const getHoldingChangePercent = (record: Stock) => {
-//   const holdingChangeAmount = getHoldingChangeAmount(record);
-//   const holdingCost = getHoldingCost(record);
-//   return holdingChangeAmount / holdingCost;
-// }
+/**
+ * StockTable 组件属性
+ */
+interface StockTableProps {
+
+  /** 删除股票回调 */
+  onDelete?: (stock: Stock) => void;
+  /** 刷新列表回调 */
+  onRefresh?: () => void;
+}
 
 /** 股票表格 */
-const StockTable = () => {
+const StockTable: React.FC<StockTableProps> = ({ 
+  onDelete, 
+  onRefresh 
+}) => {
   const [stockList, setStockList] = useState<Stock[]>([]);
 
   useEffect(() => {
@@ -54,20 +45,12 @@ const StockTable = () => {
   const updateStockData = async (record: Stock) => {
     const res = await stockApi.sync({
       code: record.code,
-      marketCode: record.marketCode || 1,
+      market: record.market || 1,
     });
     getStockList();
+    // 如果父组件提供了刷新回调，同时调用
+    onRefresh?.();
   }
-
-  /** 更新持仓 */
-  // const updateHolding = async (record: Stock) => {
-  //   const res = await stockApi.updateHolding({
-  //     code: record.code,
-  //     holdingQuantity: 15500,
-  //     holdingCost: 1.339,
-  //   });
-  //   getStockList();
-  // }
 
   const columns: TableProps['columns'] =[
     {
@@ -107,47 +90,32 @@ const StockTable = () => {
             textColor = 'text-color-green'
           }
         }
-        return <a className={textColor}>{parseFloat(record.changePercent || 0).toFixed(3)}%</a>
+        return <a className={textColor}>{parseFloat(record.changePercent || 0).toFixed(2)}%</a>
       },
     },
-    // {
-    //   title: '持仓盈亏',
-    //   dataIndex: 'holdingChangeAmount',
-    //   key: 'holdingChangeAmount',
-    //   render: (value: any, record: any, index: number) => {
-    //     const holdingChangeAmount = getHoldingChangeAmount(record);
-    //     const holdingChangePercent = getHoldingChangePercent(record);
-    //     return <a>{holdingChangeAmount}/{formatPercent(holdingChangePercent)}</a>
-    //   },
-    // },
-    // {
-    //   title: '持仓数量/市值',
-    //   dataIndex: 'holdingQuantity',
-    //   key: 'holdingQuantity',
-    //   render: (value: any, record: any, index: number) => {
-    //     const holdingAmount = getHoldingAmount(record);
-    //     return <a>{record.holdingQuantity}/{holdingAmount}</a>
-    //   },
-    // },
-    // {
-    //   title: '成本/现价',
-    //   dataIndex: 'holdingCost',
-    //   key: 'holdingCost',
-    //   render: (value: any, record: any, index: number) => {
-    //     return (
-    //       <a>{record.holdingCost}/{record.latestPrice}</a>
-    //     )
-    //   },
-    // },
     {
       title: '操作',
       dataIndex: 'action',
       key: 'action',
+      width: 200,
       render: (value: any, record: any, index: number) => {
         return (
           <Space size="middle">
-            <a onClick={ ()=>{ updateStockData(record) }}>更新数据</a>
-            {/* <a onClick={ ()=>{ updateHolding(record) }}>更新持仓</a> */}
+            <a onClick={() => { updateStockData(record) }}>更新</a>
+
+            {onDelete && (
+              <Popconfirm
+                title="确认删除"
+                description={`确定要删除股票「${record.name}」吗？`}
+                onConfirm={() => { onDelete(record) }}
+                okText="确定"
+                cancelText="取消"
+                okButtonProps={{ danger: true }}
+              >
+                <a style={{ color: '#ff4d4f' }}>删除</a>
+              </Popconfirm>
+            )}
+            {/* <a onClick={ ()=> { updateHolding(record) }}>更新持仓</a> */}
           </Space>
         )
       },
@@ -156,7 +124,12 @@ const StockTable = () => {
 
   return (
     <div className="stock-table-wrap">
-      <Table columns={columns} dataSource={stockList} />
+      <Table 
+        columns={columns} 
+        dataSource={stockList} 
+        rowKey="id"
+        pagination={{ pageSize: 10 }}
+      />
     </div>
   )
 }

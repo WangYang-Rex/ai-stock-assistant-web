@@ -78,7 +78,7 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
     try {
       const res = await quotesApi.list({
         code: stock.code,
-        marketCode: stock.marketCode?.toString() || '',
+        marketCode: stock.market?.toString() || '',
         startTime: params?.startTime || startTime,
         endTime: params?.endTime || endTime,
         page: 1,
@@ -104,14 +104,14 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
     } finally {
       setLoading(false);
     }
-  }, [stock.code, stock.marketCode, startTime, endTime]);
+  }, [stock.code, stock.market, startTime, endTime]);
 
   // 同步最新行情
   const handleRefresh = async () => {
     try {
       await quotesApi.syncStockQuotesFromAPI({
         code: stock.code,
-        marketCode: stock.marketCode?.toString() || '',
+        marketCode: stock.market?.toString() || '',
       });
       setRefreshKey(Date.now().toString());
       await fetchQuoteList();

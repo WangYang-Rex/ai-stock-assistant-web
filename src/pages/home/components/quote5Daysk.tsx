@@ -120,7 +120,7 @@ const Quote5Daysk = (props: { stock: Stock }) => {
     const fiveDaysAgo = new Date(new Date().setDate(new Date().getDate() - 8)).toISOString().split('T')[0];
     const params = {
       code: stock.code,
-      marketCode: stock.marketCode?.toString() || '',
+      marketCode: stock.market?.toString() || '',
       "startTime": `${fiveDaysAgo} 00:00:00`, // `${today} 00:00:00`;
       "endTime": `${today} 23:59:59`, // `${today} 23:59:59`,
       "page": 1,

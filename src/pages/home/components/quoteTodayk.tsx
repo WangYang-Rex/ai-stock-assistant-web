@@ -40,7 +40,7 @@ const QuoteTodayk = (props: { stock: Stock }) => {
     const today = new Date().toISOString().split('T')[0];
     const params = {
       code: stock.code,
-      marketCode: stock.marketCode?.toString() || '',
+      marketCode: stock.market?.toString() || '',
       "startTime": `${today} 09:30:00`, // '2025-11-10 00:00:00', // 
       "endTime": `${today} 23:59:59`, // '2025-11-10 23:59:59', //
       "page": 1,

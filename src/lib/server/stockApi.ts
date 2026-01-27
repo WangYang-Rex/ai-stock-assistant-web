@@ -1,194 +1,109 @@
 import { post } from "./fetch";
 import type { Stock } from "@/@types/stock";
 
+// ==================== Request Interfaces (Swagger Defined) ====================
+
 /**
  * 同步股票请求
+ * POST /stocks/sync
  */
 interface SyncStockRequest {
+  /** 股票代码（如 600519） */
   code: string;
-  marketCode: number;
+  /** 市场代码（1-上交所、0-深交所） */
+  market: number;
 }
 
 /**
  * 删除股票请求
+ * POST /stocks/delete
  */
 interface DeleteStockRequest {
+  /** 股票 ID */
   id: number;
 }
 
 /**
  * 股票列表请求
+ * POST /stocks/list
  */
 interface StockListRequest {
-  market?: string;
-  marketCode?: number;
+  /** 市场代码（可选，1-上交所、0-深交所） */
+  market?: number;
+  /** 市场类型（可选，SH-上海、SZ-深圳） */
+  marketType?: string;
+  
+  // 分页参数 (Swagger 未定义但系统可能支持)
   page?: number;
   limit?: number;
 }
 
 /**
  * 根据代码获取股票请求
+ * POST /stocks/get-by-code
  */
 interface GetStockByCodeRequest {
+  /** 股票代码 */
   code: string;
 }
 
-/**
- * 更新股票价格请求
- */
-interface UpdateStockPriceRequest {
-  code: string;
-  latestPrice?: number;
-  previousClosePrice?: number;
-  changePercent?: number;
-  changeAmount?: number;
-  openPrice?: number;
-  highPrice?: number;
-  lowPrice?: number;
-  volume?: number;
-  pe?: number;
+// ==================== Response Interfaces (Swagger Defined) ====================
+
+interface SyncStockResponseData {
+  stock: Stock;
+  /** 是否为新增股票（true-新增，false-已存在） */
+  isNew: boolean;
 }
 
-/**
- * 更新持仓信息请求
- */
-interface UpdateHoldingRequest {
-  code: string;
-  holdingQuantity?: number;
-  holdingCost?: number;
+interface DeleteStockResponseData {
+  /** 是否删除成功 */
+  success: boolean;
 }
 
-/**
- * 计算市值请求
- */
-interface CalculateMarketValueRequest {
-  code: string;
-}
-
-/**
- * 批量更新股票请求
- */
-interface BatchUpdateStocksRequest {
-  updates: Array<{
-    code: string;
-    updateData: Partial<Stock>;
-  }>;
-}
-
-/**
- * 更新市盈率请求
- */
-interface UpdatePERequest {
-  code: string;
-  pe: number;
-}
-
-/**
- * 更新成交量请求
- */
-interface UpdateVolumeRequest {
-  code: string;
-  volume: number;
-}
-
-// ==================== API 方法 ====================
+// ==================== API Implementation ====================
 
 export const stockApi = {
+  // -------------------- Swagger Defined Methods --------------------
+
   /**
-   * 同步股票信息
-   * 通过API获取股票信息，不存在则新增，存在则更新
+   * 同步股票信息 (POST /stocks/sync)
    */
-  sync: (data: SyncStockRequest): Promise<Stock> => {
-    return post<Stock>("/api/stocks/sync", data);
+  sync: (data: SyncStockRequest): Promise<SyncStockResponseData> => {
+    return post<SyncStockResponseData>("/api/stocks/sync", data);
   },
 
   /**
-   * 删除股票
-   * 根据ID删除股票
+   * 获取股票列表 (POST /stocks/list)
+   * 优化：对返回数据进行简单的预处理或类型校验
    */
-  delete: (data: DeleteStockRequest): Promise<void> => {
-    return post<void>("/api/stocks/delete", data);
+  list: async (data?: StockListRequest): Promise<Stock[]> => {
+    const stocks = await post<Stock[]>("/api/stocks/list", data || {});
+    // 处理旧数据兼容逻辑（如果后端返回了新字段，我们也保留旧字段名的引用以防 UI 崩溃）
+    return (stocks || []).map(item => ({
+      ...item,
+      latestPrice: item.price,
+      changePercent: item.pct,
+      changeAmount: item.change,
+    }));
   },
 
   /**
-   * 获取股票列表
-   * 获取所有股票或根据条件筛选
+   * 根据股票代码获取股票 (POST /stocks/get-by-code)
    */
-  list: (data?: StockListRequest): Promise<Stock[]> => {
-    return post<Stock[]>("/api/stocks/list", data || {});
+  getByCode: async (data: GetStockByCodeRequest): Promise<Stock> => {
+    const stock = await post<Stock>("/api/stocks/get-by-code", data);
+    return {
+      ...stock,
+      latestPrice: stock.price,
+      changePercent: stock.pct,
+      changeAmount: stock.change,
+    };
   },
 
   /**
-   * 根据代码获取股票
-   * 根据股票代码获取股票信息
+   * 删除股票 (POST /stocks/delete)
    */
-  getByCode: (data: GetStockByCodeRequest): Promise<Stock> => {
-    return post<Stock>("/api/stocks/get-by-code", data);
-  },
-
-  /**
-   * 更新股票价格信息
-   * 更新股票的价格相关数据
-   */
-  updatePrice: (data: UpdateStockPriceRequest): Promise<Stock> => {
-    return post<Stock>("/api/stocks/update-price", data);
-  },
-
-  /**
-   * 更新持仓信息
-   * 更新股票的持仓数量和成本信息
-   */
-  updateHolding: (data: UpdateHoldingRequest): Promise<Stock> => {
-    return post<Stock>("/api/stocks/update-holding", data);
-  },
-
-  /**
-   * 计算市值
-   * 根据持仓数量和当前价格计算市值
-   */
-  calculateMarketValue: (
-    data: CalculateMarketValueRequest
-  ): Promise<Stock> => {
-    return post<Stock>("/api/stocks/calculate-market-value", data);
-  },
-
-  /**
-   * 获取持仓股票列表
-   * 获取所有持仓的股票列表
-   */
-  holdings: (): Promise<Stock[]> => {
-    return post<Stock[]>("/api/stocks/holdings", {});
-  },
-
-  /**
-   * 批量更新股票信息
-   * 批量更新多个股票的信息
-   */
-  batchUpdate: (data: BatchUpdateStocksRequest): Promise<Stock[]> => {
-    return post<Stock[]>("/api/stocks/batch-update", data);
-  },
-
-  /**
-   * 更新市盈率
-   * 更新指定股票的市盈率
-   */
-  updatePE: (data: UpdatePERequest): Promise<Stock> => {
-    return post<Stock>("/api/stocks/update-pe", data);
-  },
-
-  /**
-   * 更新成交量
-   * 更新指定股票的成交量
-   */
-  updateVolume: (data: UpdateVolumeRequest): Promise<Stock> => {
-    return post<Stock>("/api/stocks/update-volume", data);
-  },
-
-  /**
-   * 获取股票统计信息
-   * 获取股票相关的统计信息概览
-   */
-  statsOverview: (): Promise<any> => {
-    return post<any>("/api/stocks/stats/overview", {});
+  delete: (data: DeleteStockRequest): Promise<DeleteStockResponseData> => {
+    return post<DeleteStockResponseData>("/api/stocks/delete", data);
   },
 };

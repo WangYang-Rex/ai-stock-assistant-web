@@ -1,5 +1,6 @@
 /**
  * 股票信息
+ * 严格对齐 stock.swagger.json 定义
  */
 export type Stock = {
   /** 股票ID */
@@ -7,37 +8,42 @@ export type Stock = {
   /** 股票代码 */
   code: string;
   /** 股票名称 */
-  name?: string;
-  /** 市场类型 */
-  market?: string;
-  /** 市场代码 */
-  marketCode?: number;
-  /** 市盈率 */
-  pe?: number;
-  /** 最新价 */
-  latestPrice?: number;
-  /** 涨跌幅(%) */
-  changePercent?: number;
-  /** 涨跌额 */
-  changeAmount?: number;
-  /** 开盘价 */
-  openPrice?: number;
-  /** 最高价 */
-  highPrice?: number;
-  /** 最低价 */
-  lowPrice?: number;
-  /** 昨收价 */
-  previousClosePrice?: number;
+  name: string;
+  /** 市场代码（1-上交所、0-深交所） */
+  market: number;
+  /** 市场类型（SH-上海、SZ-深圳） */
+  marketType: string;
+  
+  /** 最新价 (原 latestPrice) */
+  price: number;
+  /** 涨跌幅% (原 changePercent) */
+  pct: number;
+  /** 涨跌额 (原 changeAmount) */
+  change: number;
+  
   /** 成交量(股) */
-  volume?: number;
-  /** 持仓数量 */
-  holdingQuantity?: number;
-  /** 持仓成本 */
-  holdingCost?: number;
-  /** 市值 */
-  marketValue?: number;
+  volume: number;
+  /** 成交额(元) */
+  amount: number;
+  /** 总市值(元) */
+  totalMarketCap: number;
+  /** 流通市值(元) */
+  floatMarketCap: number;
+  /** 换手率(%) */
+  turnover: number;
+
   /** 创建时间 */
-  createdAt?: string;
+  createdAt: string;
   /** 更新时间 */
-  updatedAt?: string;
+  updatedAt: string;
+
+  // --- 兼容旧代码的可选字段 (建议逐步迁移) ---
+  /** @deprecated 请使用 price */
+  latestPrice?: number;
+  /** @deprecated 请使用 pct */
+  changePercent?: number;
+  /** @deprecated 请使用 change */
+  changeAmount?: number;
+  /** @deprecated 请使用 market */
+  marketCode?: number;
 };

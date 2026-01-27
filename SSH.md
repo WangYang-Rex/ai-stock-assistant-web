@@ -19,5 +19,5 @@ rm -r /usr/code/ai-stock-assistant-web/dist
 
 ### 将dist上传至wyecshz
 ```bash
-scp -r /Users/wangyang/project/ai-stock-assistant-web/dist root@114.55.173.101:/usr/code/ai-stock-assistant-web/
+scp -r /Users/wangyang/project/ai-stock-assistant/ai-stock-assistant-web/dist root@114.55.173.101:/usr/code/ai-stock-assistant-web/
 ```

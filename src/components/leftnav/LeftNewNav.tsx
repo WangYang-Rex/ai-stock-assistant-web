@@ -32,22 +32,28 @@ const menuMap = [
     icon: <HomeOutlined />,
   },
   {
+    key: 'strategy-signal',
+    label: '策略信号',
+    route: '/strategy-signal',
+    icon: <FundProjectionScreenOutlined />,
+  },
+  {
     key: 'trade',
     label: '实时交易',
     route: '/trade',
     icon: <SwapOutlined />,
   },
   {
-    key: 'news',
-    label: '实时新闻',
-    route: '/news',
-    icon: <FileTextOutlined />,
-  },
-  {
     key: 'stock',
     label: '智能投顾',
     route: '/stock',
     icon: <FundProjectionScreenOutlined />,
+  },
+  {
+    key: 'news',
+    label: '实时新闻',
+    route: '/news',
+    icon: <FileTextOutlined />,
   },
   {
     key: 'vite',

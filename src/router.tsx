@@ -23,6 +23,10 @@ const routes = [
     path: '/vite',
     component: lazy(() => import(/* webpackChunkName: "vite" */ '@/pages/vite/vite')),
   },
+  {
+    path: '/strategy-signal',
+    component: lazy(() => import(/* webpackChunkName: "strategy-signal" */ '@/pages/strategy-signal/index')),
+  },
 ];
 
 /**

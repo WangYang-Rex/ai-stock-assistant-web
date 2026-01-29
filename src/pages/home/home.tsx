@@ -6,6 +6,7 @@ import StockTable from './components/stockTable';
 import QuoteChart from './components/quoteChart';
 import AISign from './components/aiSign';
 import StockFormModal from './components/StockFormModal';
+import StockStrategySignal from './components/stockStrategySignal';
 import { stockApi } from '@/lib/server/stockApi'; 
 import './home.less';
 
@@ -102,6 +103,12 @@ const Home = () => {
           <div className="stock-section-title">行情图</div>
           {selectedStockRecord && (
           <QuoteChart stock={selectedStockRecord} />
+          )}
+        </div>
+        <div className="stock-section">
+          <div className="stock-section-title">策略管理</div>
+          {selectedStockRecord && (
+            <StockStrategySignal symbol={selectedStockRecord.code} />
           )}
         </div>
         <div className="stock-section">

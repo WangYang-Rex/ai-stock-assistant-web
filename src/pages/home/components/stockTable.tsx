@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Space, Table, Popconfirm } from 'antd';
+import { Space, Table, Popconfirm, message } from 'antd';
 import type { TableProps } from 'antd';
 import type { Stock } from '@/@types/stock';
 import { stockApi } from '@/lib/server/stockApi';
+import { quotesApi } from '@/lib/server/quoteApi';
+import { trendsApi } from '@/lib/server/trendsApi';
+import { klinesApi } from '@/lib/server/klineApi';
 
 /**
  * StockTable 组件属性
@@ -32,15 +35,40 @@ const StockTable: React.FC<StockTableProps> = ({
     setStockList(res);
   };
 
-  /** 更新股票数据 */
-  const updateStockData = async (record: Stock) => {
-    await stockApi.sync({
+  /** 更新股票实时行情数据 */
+  const updateStockQuoteData = async (record: Stock) => {
+    const res = await quotesApi.syncAllStockQuotes()
+    message.success(`${record.name} (${record.code}) 实时行情同步成功`);
+    getStockList();
+  }
+
+  /** 更新股票分时数据 */
+  const updateStockTrendData = async (record: Stock) => {
+    const res =await trendsApi.syncFromApi({
       code: record.code,
       market: record.market || 1,
+      ndays: 1
     });
-    getStockList();
-    // 如果父组件提供了刷新回调，同时调用
-    onRefresh?.();
+    message.success(`${record.name} (${record.code}) 分时数据同步成功`);
+  }
+
+  /** 更新股票5日分时数据 */
+  const updateStock5DayTrendData = async (record: Stock) => {
+    const res = await trendsApi.syncFromApi({
+      code: record.code,
+      market: record.market || 1,
+      ndays: 5
+    });
+    message.success(`${record.name} (${record.code}) 5日分时数据同步成功`);
+  }
+
+  /** 更新股票日线数据 */
+  const updateStockKlineData = async (record: Stock) => {
+    const res = await klinesApi.sync({
+      code: record.code,
+      period: 'daily',
+    });
+    message.success(`${record.name} (${record.code}) 日线数据同步成功`);
   }
 
   const columns: TableProps['columns'] =[
@@ -48,6 +76,7 @@ const StockTable: React.FC<StockTableProps> = ({
       title: '股票名称',
       dataIndex: 'name',
       key: 'name',
+      width: 200,
       render: (value: any, record: any) => {
         return <a>{value} - {record.code}</a>
       },
@@ -56,6 +85,7 @@ const StockTable: React.FC<StockTableProps> = ({
       title: '最新价',
       dataIndex: 'price',
       key: 'price',
+      width: 120,
       render: (value: any) => {
         const price = parseFloat(value || 0);
         return <a className={price > 0 ? 'text-color-red' : 'text-color-green'}>
@@ -67,6 +97,7 @@ const StockTable: React.FC<StockTableProps> = ({
       title: '今日涨跌幅',
       dataIndex: 'pct',
       key: 'pct',
+      width: 120,
       render: (value: any) => {
         const pct = parseFloat(value || 0);
         return <a className={pct > 0 ? 'text-color-red' : 'text-color-green'}>
@@ -82,8 +113,10 @@ const StockTable: React.FC<StockTableProps> = ({
       render: (_: any, record: any) => {
         return (
           <Space size="middle">
-            <a onClick={() => { updateStockData(record) }}>更新</a>
-
+            <a onClick={() => { updateStockQuoteData(record) }}>实时</a>
+            <a onClick={() => { updateStockTrendData(record) }}>分时</a>
+            <a onClick={() => { updateStock5DayTrendData(record) }}>5日</a>
+            <a onClick={() => { updateStockKlineData(record) }}>日线</a>
             {onDelete && (
               <Popconfirm
                 title="确认删除"

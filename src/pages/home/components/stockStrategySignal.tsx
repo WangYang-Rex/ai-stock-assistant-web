@@ -15,6 +15,11 @@ import type { StrategySignal } from '@/@types/strategy';
 
 const { Text } = Typography;
 
+const strategyCodeMap: Record<string, string> = {
+  'CLOSE_AUCTION_T1': '尾盘战法策略',
+  'RULE_TREND_V1': '规则型股票趋势模型'
+}
+
 interface StockStrategySignalProps {
   symbol: string;
 }
@@ -63,6 +68,7 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
       title: '执行时间',
       dataIndex: 'evalTime',
       key: 'evalTime',
+      width: 120,
       render: (text: string) => (
         <Space>
           <ClockCircleOutlined style={{ color: '#94A3B8' }} />
@@ -74,12 +80,16 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
       title: '策略',
       dataIndex: 'strategyCode',
       key: 'strategyCode',
-      render: (text: string) => <Tag color="blue">{text || '尾盘策略'}</Tag>,
+      width: 120,
+      render: (text: string) => {
+        return <Tag color="blue">{strategyCodeMap[text] || text || '尾盘策略'}</Tag>
+      },
     },
     {
       title: '决策',
       dataIndex: 'allow',
       key: 'allow',
+      width: 120,
       render: (allow: number) => (
         <Space>
           {allow === 1 ? (
@@ -94,6 +104,7 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
       title: '置信度',
       dataIndex: 'confidence',
       key: 'confidence',
+      width: 100,
       render: (val: number) => (
         <Text strong style={{ color: val > 70 ? '#10B981' : '#64748B' }}>
           {val ?? '--'}%
@@ -104,6 +115,7 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
       title: '原因',
       dataIndex: 'reasons',
       key: 'reasons',
+      width: 240,
       render: (reasons: string[]) => (
         <div style={{ maxWidth: 200 }}>
           {reasons?.map((r, i) => (

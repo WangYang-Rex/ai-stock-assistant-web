@@ -1,6 +1,8 @@
-import React, { useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useLayoutEffect, useRef, useCallback, useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import echarts from '@/lib/echartUtil';
+import { trendsApi } from '@/lib/server/trendsApi';
+import type { Stock } from '@/@types/stock';
 import type { Quote } from '@/@types/quote';
 import type { Trend } from '@/@types/trend';
 import { 
@@ -13,14 +15,42 @@ import {
 } from './chartConfig';
 
 interface IntradayChartProps {
-  quoteList: (Quote | Trend)[];
+  stock: Stock;
 }
 
 /**
  * 分时图组件 - 专为单日分时走势优化
  */
-const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
+const IntradayChart: React.FC<IntradayChartProps> = ({ stock }) => {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [quoteList, setQuoteList] = useState<(Quote | Trend)[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await trendsApi.list({
+        code: stock.code,
+        ndays: 1,
+        limit: 1000
+      });
+      const trends = res.trends || [];
+      trends.sort((a, b) => {
+        const timeA = 'datetime' in a ? dayjs(a.datetime).unix() : (a as any).updateTime;
+        const timeB = 'datetime' in b ? dayjs(b.datetime).unix() : (b as any).updateTime;
+        return timeA - timeB;
+      });
+      setQuoteList(trends);
+    } catch (error) {
+      console.error('IntradayChart fetchData failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [stock.code]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const chartInit = useCallback(() => {
     if (!chartRef.current || quoteList.length === 0) {
@@ -29,7 +59,7 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
 
     // 获取昨收价作为基准
     let previousClose = 0;
-    const first = quoteList[0];
+    const first = quoteList[0] as any;
     if ('preClose' in first && first.preClose) {
       previousClose = Number(first.preClose);
     } else if ('pct' in first) {
@@ -181,10 +211,20 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
           position: 'left',
           min: yAxisMin,
           max: yAxisMax,
-          splitNumber: 4,
-          axisLabel: { fontSize: 11, color: CHART_COLORS.text, formatter: (v: number) => v.toFixed(2), margin: 8 },
+          interval: yAxisMax - previousClose,
+          splitNumber: 2,
+          axisLabel: { 
+            inside: true, 
+            fontSize: 10, 
+            color: CHART_COLORS.text, 
+            formatter: (v: number) => v.toFixed(2), 
+            margin: 0,
+            padding: [0, 0, 2, 4],
+            verticalAlign: 'bottom'
+          },
           axisLine: { show: false },
           axisTick: { show: false },
+          z: 10,
           splitLine: {
             show: true,
             lineStyle: {
@@ -200,9 +240,11 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
           position: 'right',
           min: yAxisMin,
           max: yAxisMax,
-          splitNumber: 4,
+          interval: yAxisMax - previousClose,
+          splitNumber: 2,
           axisLabel: {
-            fontSize: 11,
+            inside: true,
+            fontSize: 10,
             color: (value: number) => {
               const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return Math.abs(pct) < 0.01 ? CHART_COLORS.flat : pct > 0 ? CHART_COLORS.rise : CHART_COLORS.fall;
@@ -211,11 +253,14 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
               const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
             },
-            margin: 8
+            margin: 0,
+            padding: [0, 4, 2, 0],
+            verticalAlign: 'bottom'
           },
           axisLine: { show: false },
           axisTick: { show: false },
-          splitLine: { show: false }
+          z: 10,
+          splitLine: { show: true, lineStyle: { color: CHART_COLORS.grid, type: 'dashed' } }
         },
         {
           type: 'value',
@@ -238,12 +283,12 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
           smooth: false,
           sampling: 'lttb',
           lineStyle: { width: 1.5, color: isRising ? CHART_COLORS.rise : CHART_COLORS.fall },
-          markLine: {
-            symbol: 'none',
-            silent: true,
-            label: { show: true, position: 'insideEndTop', formatter: `昨收 ${previousClose.toFixed(2)}`, fontSize: 11, color: CHART_COLORS.flat },
-            data: [{ yAxis: previousClose, lineStyle: { color: CHART_COLORS.flat, type: 'solid', width: 1.5, opacity: 0.8 } }]
-          },
+          // markLine: {
+          //   symbol: 'none',
+          //   silent: true,
+          //   label: { show: true, position: 'insideEndTop', formatter: `0.00%`, fontSize: 11, color: CHART_COLORS.flat },
+          //   data: [{ yAxis: previousClose, lineStyle: { color: CHART_COLORS.flat, type: 'solid', width: 1.5, opacity: 0.8 } }]
+          // },
           markPoint: {
             symbol: 'circle',
             symbolSize: 6,
@@ -302,7 +347,22 @@ const IntradayChart: React.FC<IntradayChartProps> = ({ quoteList }) => {
     return cleanup;
   }, [chartInit]);
 
-  return <div ref={chartRef} className="ai-report-card-chart-container" />;
+  return (
+    <div style={{ position: 'relative' }}>
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+          zIndex: 10
+        }}>
+          加载中...
+        </div>
+      )}
+      <div ref={chartRef} className="ai-report-card-chart-container" />
+    </div>
+  );
 };
 
 export default IntradayChart;

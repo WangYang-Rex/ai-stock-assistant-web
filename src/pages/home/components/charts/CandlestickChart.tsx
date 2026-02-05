@@ -9,9 +9,11 @@
  * - 支持缩放和拖动
  */
 
-import React, { useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useLayoutEffect, useRef, useCallback, useMemo, useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import echarts from '@/lib/echartUtil';
+import { klinesApi } from '@/lib/server/klineApi';
+import type { Stock } from '@/@types/stock';
 import type { Quote } from '@/@types/quote';
 import type { Kline } from '@/@types/kline';
 import { 
@@ -21,7 +23,7 @@ import {
 } from './chartConfig';
 
 interface CandlestickChartProps {
-  quoteList: (Quote | Kline)[];
+  stock: Stock;
 }
 
 /**
@@ -108,8 +110,31 @@ const calculateMA = (data: any[], period: number) => {
 /**
  * 日K线图组件 - 专业蜡烛图展示
  */
-const CandlestickChart: React.FC<CandlestickChartProps> = ({ quoteList }) => {
+const CandlestickChart: React.FC<CandlestickChartProps> = ({ stock }) => {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [quoteList, setQuoteList] = useState<(Quote | Kline)[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await klinesApi.list({
+        code: stock.code,
+        period: 101, // 日线
+        limit: 1000,
+        orderBy: 'ASC'
+      });
+      setQuoteList(res.data || []);
+    } catch (error) {
+      console.error('CandlestickChart fetchData failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [stock.code]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // 转换/获取日K数据
   const dailyData = useMemo(() => processToDailyData(quoteList), [quoteList]);
@@ -347,7 +372,22 @@ const CandlestickChart: React.FC<CandlestickChartProps> = ({ quoteList }) => {
     return cleanup;
   }, [chartInit]);
 
-  return <div ref={chartRef} className="ai-report-card-chart-container" />;
+  return (
+    <div style={{ position: 'relative' }}>
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+          zIndex: 10
+        }}>
+          加载中...
+        </div>
+      )}
+      <div ref={chartRef} className="ai-report-card-chart-container" />
+    </div>
+  );
 };
 
 export default CandlestickChart;

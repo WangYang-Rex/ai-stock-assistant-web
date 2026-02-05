@@ -1,6 +1,8 @@
-import React, { useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useLayoutEffect, useRef, useCallback, useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import echarts from '@/lib/echartUtil';
+import { trendsApi } from '@/lib/server/trendsApi';
+import type { Stock } from '@/@types/stock';
 import type { Quote } from '@/@types/quote';
 import type { Trend } from '@/@types/trend';
 import { 
@@ -12,14 +14,42 @@ import {
 } from './chartConfig';
 
 interface FiveDayChartProps {
-  quoteList: (Quote | Trend)[];
+  stock: Stock;
 }
 
 /**
  * 5日分时图组件 - 专为跨日走势优化
  */
-const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
+const FiveDayChart: React.FC<FiveDayChartProps> = ({ stock }) => {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [quoteList, setQuoteList] = useState<(Quote | Trend)[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await trendsApi.list({
+        code: stock.code,
+        ndays: 7, // 覆盖 5 个交易日
+        limit: 2000
+      });
+      const trends = res.trends || [];
+      trends.sort((a, b) => {
+        const timeA = 'datetime' in a ? dayjs(a.datetime).unix() : (a as any).updateTime;
+        const timeB = 'datetime' in b ? dayjs(b.datetime).unix() : (b as any).updateTime;
+        return timeA - timeB;
+      });
+      setQuoteList(trends);
+    } catch (error) {
+      console.error('FiveDayChart fetchData failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [stock.code]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const chartInit = useCallback(() => {
     if (!chartRef.current || quoteList.length === 0) {
@@ -28,12 +58,12 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
 
     // 获取基准昨收价（如果是多日图，通常以第一天的昨收价为基准线，或者不显基准线）
     let previousClose = 0;
-    const first = quoteList[0];
-    if ('preClose' in first && first.preClose) {
+    const first = quoteList[0] as any;
+    if (first && 'preClose' in first && first.preClose) {
       previousClose = Number(first.preClose);
-    } else if ('pct' in first) {
+    } else if (first && 'pct' in first) {
       previousClose = Number(first.price) / (1 + (Number(first.pct) || 0) / 100);
-    } else if ('open' in first) {
+    } else if (first && 'open' in first) {
       previousClose = Number(first.open);
     }
 
@@ -275,7 +305,22 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ quoteList }) => {
     return cleanup;
   }, [chartInit]);
 
-  return <div ref={chartRef} className="ai-report-card-chart-container" />;
+  return (
+    <div style={{ position: 'relative' }}>
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+          zIndex: 10
+        }}>
+          加载中...
+        </div>
+      )}
+      <div ref={chartRef} className="ai-report-card-chart-container" />
+    </div>
+  );
 };
 
 export default FiveDayChart;

@@ -24,9 +24,34 @@ const StockTable: React.FC<StockTableProps> = ({
   onRefresh 
 }) => {
   const [stockList, setStockList] = useState<Stock[]>([]);
+  const [countdown, setCountdown] = useState(60);
 
   useEffect(() => {
     getStockList();
+
+    // 倒计时定时器
+    const timer = setInterval(async () => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          // 倒计时结束，执行同步逻辑
+          syncData();
+          return 60; // 重置倒计时
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // 同步数据的辅助函数
+    const syncData = async () => {
+      try {
+        await quotesApi.syncAllStockQuotes();
+        getStockList();
+      } catch (error) {
+        console.error('自动同步行情失败:', error);
+      }
+    };
+
+    return () => clearInterval(timer);
   }, []);
 
   /** 获取股票列表 */
@@ -137,6 +162,9 @@ const StockTable: React.FC<StockTableProps> = ({
 
   return (
     <div className="stock-table-wrap">
+      <div className="refresh-countdown">
+        下一次更新: <span className="countdown-value">{countdown}s</span>
+      </div>
       <Table 
         columns={columns} 
         dataSource={stockList} 

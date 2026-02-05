@@ -152,6 +152,7 @@
  * Stock Table Component
  * ============================================ */
 .stock-table-wrap {
+  position: relative;
   .ant-table {
     background: @color-bg-elevated;
     border-radius: @radius-md;
@@ -216,6 +217,28 @@
   .price-neutral {
     color: @color-text-secondary;
     font-family: @font-family-mono;
+  }
+
+  /* Countdown Refresh */
+  .refresh-countdown {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    color: @color-text-muted;
+    font-size: @font-size-sm;
+    position: absolute;
+    top: -50px;
+    right: 0;
+
+    .countdown-value {
+      font-weight: @font-weight-bold;
+      min-width: 24px;
+      display: inline-block;
+      text-align: right;
+      margin-left: 4px;
+      color: @color-text-primary;
+    }
   }
 }
 

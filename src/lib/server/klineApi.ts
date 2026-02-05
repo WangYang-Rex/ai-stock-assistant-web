@@ -5,7 +5,7 @@ import type { Kline } from "@/@types/kline";
 
 /**
  * 同步K线数据请求
- * POST /klines/sync
+ * POST /api/klines/sync
  */
 export interface SyncKlinesRequest {
   /** 股票代码 (如 600519) */
@@ -34,7 +34,7 @@ export interface SyncKlinesRequest {
 
 /**
  * 查询K线数据列表请求
- * POST /klines/list
+ * POST /api/klines/list
  */
 export interface ListKlinesRequest {
   /** 股票代码 */
@@ -67,13 +67,13 @@ export interface ListKlinesRequest {
 
 /**
  * 获取K线统计信息请求
- * POST /klines/stats
+ * POST /api/klines/stats
  */
 export interface KlineStatsRequest {
   /** 股票代码 */
   code: string;
   /** 
-   * K线周期
+   * K线周期 (101=日线, 102=周线, 103=月线, 1/5/15/30/60=分钟线)
    * 默认: 101
    */
   period?: number;
@@ -105,6 +105,14 @@ export interface ListKlinesResponseData {
   limit: number;
 }
 
+/**
+ * K线统计信息响应数据
+ */
+export interface KlineStatsResponseData {
+  /** 统计数据内容（根据实际 API 返回结构定义，目前 Swagger 定义为 object） */
+  [key: string]: any;
+}
+
 // ==================== API Implementation ====================
 
 export const klinesApi = {
@@ -128,7 +136,7 @@ export const klinesApi = {
    * 获取K线统计信息 (POST /api/klines/stats)
    * 获取指定股票在特定周期下的K线统计数据
    */
-  stats: (data: KlineStatsRequest): Promise<any> => {
-    return post<any>("/api/klines/stats", data);
+  stats: (data: KlineStatsRequest): Promise<KlineStatsResponseData> => {
+    return post<KlineStatsResponseData>("/api/klines/stats", data);
   },
 };

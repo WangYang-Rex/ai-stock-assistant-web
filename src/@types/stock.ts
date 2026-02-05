@@ -47,3 +47,27 @@ export type Stock = {
   /** @deprecated 请使用 market */
   marketCode?: number;
 };
+
+/**
+ * ETF 成分股信息
+ * 严格对齐 stock.swagger.json 定义
+ */
+export type EtfConstituent = {
+  /** 记录 ID */
+  id: number;
+  /** ETF 代码 */
+  etfCode: string;
+  /** 成分股代码 */
+  stockCode: string;
+  /** 成分股名称 */
+  stockName: string;
+  /** 权重 */
+  weight: number;
+  /** 排名 */
+  rank: number;
+  /** 生效日期 */
+  effectiveDate: string;
+  /** 失效日期 */
+  expireDate: string | null;
+};
+

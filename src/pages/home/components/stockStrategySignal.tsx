@@ -35,7 +35,7 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
     try {
       const data = await strategiesApi.getLatestSignals({ 
         symbol, 
-        limit: 5
+        limit: 10 // Increase limit for better view
       });
       setLatestSignals(data);
     } catch (err: any) {
@@ -49,15 +49,35 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
     fetchSignals();
   }, [fetchSignals]);
 
-  const handleEvaluate = async () => {
+  // 尾盘战法评估
+  const handleEvaluateCloseAuction = async () => {
     if (!symbol) return;
     setEvaluating(true);
     try {
-      const result = await strategiesApi.evaluateBySymbol({ symbol });
-      message.success('评估完成');
+      await strategiesApi.evaluateBySymbol({ symbol });
+      message.success('尾盘评估完成');
       fetchSignals(); // 刷新列表
     } catch (err: any) {
-      message.error('评估失败: ' + err.message);
+      message.error('尾盘评估失败: ' + err.message);
+    } finally {
+      setEvaluating(false);
+    }
+  };
+
+  // 规则趋势评估
+  const handleEvaluateRuleTrend = async () => {
+    if (!symbol) return;
+    setEvaluating(true);
+    try {
+      const result = await strategiesApi.evaluateRuleTrend({ code: symbol });
+      if (result.success) {
+        message.success(`趋势评估完成: ${result.decision?.action || '保持'}`);
+      } else {
+        message.warning('评估完成，但未生成明确决策: ' + (result.message || ''));
+      }
+      fetchSignals(); // 刷新列表
+    } catch (err: any) {
+      message.error('规则趋势评估失败: ' + err.message);
     } finally {
       setEvaluating(false);
     }
@@ -68,11 +88,11 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
       title: '执行时间',
       dataIndex: 'evalTime',
       key: 'evalTime',
-      width: 120,
+      width: 140,
       render: (text: string) => (
         <Space>
           <ClockCircleOutlined style={{ color: '#94A3B8' }} />
-          <span>{text ? dayjs(text).format('MM-DD HH:mm') : '--'}</span>
+          <span>{text ? dayjs(text).format('MM-DD HH:mm:ss') : '--'}</span>
         </Space>
       ),
     },
@@ -80,46 +100,78 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
       title: '策略',
       dataIndex: 'strategyCode',
       key: 'strategyCode',
-      width: 120,
+      width: 150,
       render: (text: string) => {
-        return <Tag color="blue">{strategyCodeMap[text] || text || '尾盘策略'}</Tag>
+        return <Tag color="blue" style={{ borderRadius: 4 }}>{strategyCodeMap[text] || text || '--'}</Tag>
+      },
+    },
+    {
+      title: '当前价格',
+      dataIndex: 'price',
+      key: 'price',
+      width: 90,
+      render: (price: any) => {
+        const numPrice = Number(price);
+        return (!isNaN(numPrice) && price !== null && price !== undefined) 
+          ? <Text strong>{numPrice.toFixed(3)}</Text> 
+          : '--';
       },
     },
     {
       title: '决策',
       dataIndex: 'allow',
       key: 'allow',
-      width: 120,
-      render: (allow: number) => (
-        <Space>
-          {allow === 1 ? (
-            <Tag icon={<CheckCircleOutlined />} color="success">允许买入</Tag>
-          ) : (
-            <Tag icon={<CloseCircleOutlined />} color="default">保持观望</Tag>
-          )}
-        </Space>
-      ),
+      width: 100,
+      render: (allow: number, record: StrategySignal) => {
+        // 对于趋势模型，决策可能在 extra 中有更详细信息
+        const action = record.extra?.decision?.action || record.extra?.action;
+        
+        if (record.strategyCode === 'RULE_TREND_V1' && action) {
+          const colorMap: Record<string, string> = {
+            'ADD': 'success',
+            'REDUCE': 'warning',
+            'STOP': 'error',
+            'HOLD': 'processing'
+          };
+          const textMap: Record<string, string> = {
+            'ADD': '加仓/买入',
+            'REDUCE': '减仓/卖出',
+            'STOP': '止损/清仓',
+            'HOLD': '继续持有'
+          };
+          return <Tag color={colorMap[action] || 'default'}>{textMap[action] || action}</Tag>;
+        }
+
+        return (
+          <Space>
+            {allow === 1 ? (
+              <Tag icon={<CheckCircleOutlined />} color="success">允许买入</Tag>
+            ) : (
+              <Tag icon={<CloseCircleOutlined />} color="default">保持观望</Tag>
+            )}
+          </Space>
+        );
+      },
     },
     {
-      title: '置信度',
+      title: '评分/置信度',
       dataIndex: 'confidence',
       key: 'confidence',
       width: 100,
       render: (val: number) => (
-        <Text strong style={{ color: val > 70 ? '#10B981' : '#64748B' }}>
-          {val ?? '--'}%
+        <Text strong style={{ color: val > 70 ? '#10B981' : val > 40 ? '#F59E0B' : '#64748B' }}>
+          {val ?? '--'}{val !== undefined ? '%' : ''}
         </Text>
       ),
     },
     {
-      title: '原因',
+      title: '评估分析',
       dataIndex: 'reasons',
       key: 'reasons',
-      width: 240,
       render: (reasons: string[]) => (
-        <div style={{ maxWidth: 200 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {reasons?.map((r, i) => (
-            <Tag key={i} style={{ marginBottom: 4 }}>{r}</Tag>
+            <Tag key={i} color="blue-inverse" style={{ fontSize: '11px', margin: 0 }}>{r}</Tag>
           ))}
         </div>
       ),
@@ -128,40 +180,79 @@ const StockStrategySignal: React.FC<StockStrategySignalProps> = ({ symbol }) => 
 
   return (
     <div className="stock-strategy-signal">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <Space>
-          <ThunderboltOutlined style={{ color: '#F97316' }} />
-          <span style={{ fontWeight: 600 }}>策略执行历史</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Space align="center">
+          <div style={{ 
+            width: 32, 
+            height: 32, 
+            borderRadius: '50%', 
+            background: 'rgba(249, 115, 22, 0.1)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}>
+            <ThunderboltOutlined style={{ color: '#F97316', fontSize: 18 }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 15 }}>策略执行历史</div>
+            <div style={{ fontSize: 12, color: '#64748B' }}>AI 实时分析与回测记录</div>
+          </div>
         </Space>
-        <Space>
+        <Space size="middle">
           <Button 
             size="small" 
+            variant="text"
             icon={<SyncOutlined spin={loading} />} 
             onClick={fetchSignals}
           >
             刷新
           </Button>
-          <Button 
-            type="primary" 
-            size="small" 
-            icon={<PlayCircleOutlined />} 
-            loading={evaluating}
-            onClick={handleEvaluate}
-          >
-            立即评估 (尾盘)
-          </Button>
+          <Space.Compact size="small">
+            <Tooltip title="立即执行尾盘评估算法">
+              <Button 
+                icon={<PlayCircleOutlined />} 
+                loading={evaluating}
+                onClick={handleEvaluateCloseAuction}
+              >
+                尾盘评估
+              </Button>
+            </Tooltip>
+            <Tooltip title="立即执行趋势追踪模型评估">
+              <Button 
+                type="primary"
+                icon={<ThunderboltOutlined />} 
+                loading={evaluating}
+                onClick={handleEvaluateRuleTrend}
+              >
+                趋势评估
+              </Button>
+            </Tooltip>
+          </Space.Compact>
         </Space>
       </div>
 
-      <Table
-        size="small"
-        columns={columns}
-        dataSource={latestSignals}
-        rowKey="id"
-        loading={loading}
-        pagination={false}
-        locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无历史信号" /> }}
-      />
+      <Card size="small" styles={{ body: { padding: 0 } }} bordered={false}>
+        <Table
+          size="small"
+          columns={columns}
+          dataSource={latestSignals}
+          rowKey="id"
+          loading={loading}
+          pagination={latestSignals.length > 5 ? { pageSize: 5, simple: true } : false}
+          locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无历史信号" /> }}
+          rowClassName={(record) => record.allow === 1 ? 'row-signal-buy' : ''}
+        />
+      </Card>
+
+      <style>{`
+        .row-signal-buy {
+          background-color: rgba(16, 185, 129, 0.02);
+        }
+        .stock-strategy-signal .ant-table-thead > tr > th {
+          background-color: #F8FAFC;
+          font-weight: 600;
+        }
+      `}</style>
     </div>
   );
 };

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, Modal, Form, Input, Select, DatePicker, Space, message, Popconfirm, Card, Row, Col, Statistic } from 'antd';
+import { Button, Table, Select, Space, message, Popconfirm, Card, Row, Col, Statistic } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, DollarOutlined, RiseOutlined, FallOutlined, BarChartOutlined } from '@ant-design/icons';
 import type { TableProps } from 'antd';
-import type { Trading, TradingInput, TradingStats } from '@/@types/trading';
+import type { Trading, TradingStats } from '@/@types/trading';
 import type { Stock } from '@/@types/stock';
 import { tradingApi } from '@/lib/server/tradingApi';
 import { stockApi } from '@/lib/server/stockApi';
 import dayjs from 'dayjs';
+import TradeModal from './components/TradeModal';
 import './trade.less';
 
 /**
@@ -21,11 +22,10 @@ const Trade = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTrading, setEditingTrading] = useState<Trading | null>(null);
   const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
 
   // 筛选条件
-  const [filterSymbol, setFilterSymbol] = useState<string | undefined>(undefined);
-  const [filterType, setFilterType] = useState<'buy' | 'sell' | undefined>(undefined);
+  const [filterCode, setFilterCode] = useState<string | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<'open' | 'closed' | undefined>(undefined);
 
   useEffect(() => {
     loadTradingList();
@@ -74,11 +74,10 @@ const Trade = () => {
   };
 
   /**
-   * 打开添加/编辑弹窗
+   * 打开添加弹窗
    */
   const handleAdd = () => {
     setEditingTrading(null);
-    form.resetFields();
     setIsModalVisible(true);
   };
 
@@ -87,10 +86,6 @@ const Trade = () => {
    */
   const handleEdit = (record: Trading) => {
     setEditingTrading(record);
-    form.setFieldsValue({
-      ...record,
-      tradingTime: record.tradingTime ? dayjs(record.tradingTime) : undefined,
-    });
     setIsModalVisible(true);
   };
 
@@ -101,8 +96,7 @@ const Trade = () => {
     try {
       await tradingApi.delete({ id });
       message.success('删除成功');
-      loadTradingList();
-      loadStats();
+      refreshData();
     } catch (error) {
       message.error('删除失败');
       console.error(error);
@@ -110,54 +104,11 @@ const Trade = () => {
   };
 
   /**
-   * 提交表单（添加/编辑）
+   * 刷新数据
    */
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      const data: TradingInput = {
-        symbol: values.symbol,
-        name: values.name,
-        type: values.type,
-        tradingTime: values.tradingTime ? dayjs(values.tradingTime).toISOString() : '',
-        quantity: Number(values.quantity),
-        price: Number(values.price),
-        amount: Number(values.quantity) * Number(values.price), // 计算交易金额
-        relatedTradingId: values.relatedTradingId ? Number(values.relatedTradingId) : undefined,
-        remarks: values.remarks,
-      };
-
-      if (editingTrading) {
-        // 更新
-        await tradingApi.update({
-          id: editingTrading.id!,
-          updateData: data,
-        });
-        message.success('更新成功');
-      } else {
-        // 创建
-        await tradingApi.create(data);
-        message.success('添加成功');
-      }
-
-      setIsModalVisible(false);
-      form.resetFields();
-      loadTradingList();
-      loadStats();
-    } catch (error) {
-      message.error(editingTrading ? '更新失败' : '添加失败');
-      console.error(error);
-    }
-  };
-
-  /**
-   * 当选择股票时自动填充名称
-   */
-  const handleSymbolChange = (value: string) => {
-    const stock = stockList.find(s => s.code === value);
-    if (stock) {
-      form.setFieldsValue({ name: stock.name });
-    }
+  const refreshData = () => {
+    loadTradingList();
+    loadStats();
   };
 
   /**
@@ -166,23 +117,19 @@ const Trade = () => {
   const getFilteredTradingList = () => {
     let filtered = [...tradingList];
 
-    if (filterSymbol) {
-      filtered = filtered.filter(t => t.symbol === filterSymbol);
+    if (filterCode) {
+      filtered = filtered.filter(t => t.code === filterCode);
     }
 
-    if (filterType) {
-      filtered = filtered.filter(t => t.type === filterType);
+    if (filterStatus) {
+      if (filterStatus === 'open') {
+        filtered = filtered.filter(t => !t.sell_date);
+      } else {
+        filtered = filtered.filter(t => !!t.sell_date);
+      }
     }
 
     return filtered;
-  };
-
-  /**
-   * 获取唯一的股票代码列表
-   */
-  const getUniqueSymbols = () => {
-    const symbols = tradingList.map(t => t.symbol);
-    return Array.from(new Set(symbols));
   };
 
   /**
@@ -190,72 +137,115 @@ const Trade = () => {
    */
   const columns: TableProps<Trading>['columns'] = [
     {
-      title: '股票代码',
-      dataIndex: 'symbol',
-      key: 'symbol',
-      width: 120,
+      title: '股票',
+      dataIndex: 'code',
+      key: 'code',
+      width: 150,
+      fixed: 'left',
       render: (value: string, record: Trading) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{record.name}</div>
-          <div style={{ color: '#999', fontSize: '12px' }}>{value}</div>
+          <div style={{ fontWeight: 600, color: '#1f2937' }}>{record.name}</div>
+          <div style={{ color: '#6b7280', fontSize: '12px' }}>{value}</div>
         </div>
       ),
     },
     {
-      title: '交易类型',
-      dataIndex: 'type',
-      key: 'type',
+      title: '买入详情',
+      key: 'buy_info',
+      children: [
+        {
+          title: '日期',
+          dataIndex: 'buy_date',
+          key: 'buy_date',
+          width: 120,
+          render: (value: string) => value ? dayjs(value).format('MM-DD HH:mm') : '-',
+        },
+        {
+          title: '价格',
+          dataIndex: 'buy_price',
+          key: 'buy_price',
+          width: 100,
+          render: (value: any) => {
+            const num = Number(value);
+            return !isNaN(num) && value !== null && value !== undefined ? `¥${num.toFixed(2)}` : '-';
+          },
+        },
+        {
+          title: '数量',
+          dataIndex: 'buy_volume',
+          key: 'buy_volume',
+          width: 100,
+          render: (value: number) => value ? value.toLocaleString() : '-',
+        },
+      ],
+    },
+    {
+      title: '卖出详情',
+      key: 'sell_info',
+      children: [
+        {
+          title: '日期',
+          dataIndex: 'sell_date',
+          key: 'sell_date',
+          width: 120,
+          render: (value: string) => value ? dayjs(value).format('MM-DD HH:mm') : '-',
+        },
+        {
+          title: '价格',
+          dataIndex: 'sell_price',
+          key: 'sell_price',
+          width: 100,
+          render: (value: any) => {
+            const num = Number(value);
+            return !isNaN(num) && value !== null && value !== undefined ? `¥${num.toFixed(2)}` : '-';
+          },
+        },
+        {
+          title: '数量',
+          dataIndex: 'sell_volume',
+          key: 'sell_volume',
+          width: 100,
+          render: (value: number) => value ? value.toLocaleString() : '-',
+        },
+      ],
+    },
+    {
+      title: '盈亏',
+      key: 'profit',
+      width: 120,
+      render: (_, record) => {
+        if (!record.buy_price || !record.buy_volume || !record.sell_price) return '-';
+        const buyAmount = record.buy_price * record.buy_volume;
+        const sellAmount = record.sell_price * (record.sell_volume || record.buy_volume);
+        const profit = sellAmount - buyAmount;
+        const profitRate = (profit / buyAmount) * 100;
+        const color = profit >= 0 ? '#ef4444' : '#10b981';
+        return (
+          <div style={{ color, fontWeight: 500 }}>
+            <div>{profit >= 0 ? '+' : ''}{Number(profit).toFixed(2)}</div>
+            <div style={{ fontSize: '12px' }}>{profit >= 0 ? '+' : ''}{Number(profitRate).toFixed(2)}%</div>
+          </div>
+        );
+      },
+    },
+    {
+      title: '状态',
+      key: 'status',
       width: 100,
-      render: (value: string) => (
-        <span className={value === 'buy' ? 'text-color-red' : 'text-color-green'}>
-          {value === 'buy' ? '买入' : '卖出'}
+      render: (_, record) => (
+        <span className={record.sell_date ? 'trade-type-sell' : 'trade-type-buy'}>
+          {record.sell_date ? '已平仓' : '持仓中'}
         </span>
       ),
     },
     {
-      title: '交易时间',
-      dataIndex: 'tradingTime',
-      key: 'tradingTime',
-      width: 180,
-      render: (value: string) => dayjs(value).format('YYYY-MM-DD HH:mm'),
-    },
-    {
-      title: '数量(股)',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      width: 120,
-      render: (value: any) => Number(value || 0).toLocaleString(),
-    },
-    {
-      title: '价格',
-      dataIndex: 'price',
-      key: 'price',
-      width: 120,
-      render: (value: any) => `¥${Number(value || 0).toFixed(2)}`,
-    },
-    {
-      title: '金额',
-      dataIndex: 'amount',
-      key: 'amount',
-      width: 150,
-      render: (value: any) => `¥${Number(value || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    },
-    {
-      title: '备注',
-      dataIndex: 'remarks',
-      key: 'remarks',
-      ellipsis: true,
-    },
-    {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 120,
       fixed: 'right',
       render: (_, record) => (
-        <Space size="middle">
-          <a onClick={() => handleEdit(record)}>
-            <EditOutlined /> 编辑
-          </a>
+        <Space size="small">
+          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} size="small">编辑</Button>
           <Popconfirm
             title="确认删除"
             description="确定要删除这条交易记录吗？"
@@ -263,9 +253,7 @@ const Trade = () => {
             okText="确定"
             cancelText="取消"
           >
-            <a style={{ color: '#ff4d4f' }}>
-              <DeleteOutlined /> 删除
-            </a>
+            <Button type="text" danger icon={<DeleteOutlined />} size="small">删除</Button>
           </Popconfirm>
         </Space>
       ),
@@ -279,34 +267,35 @@ const Trade = () => {
         <Space size="middle">
           <Select
             placeholder="选择股票"
-            style={{ width: 200 }}
+            style={{ width: 220 }}
             allowClear
             showSearch
             optionFilterProp="label"
-            value={filterSymbol}
-            onChange={setFilterSymbol}
+            value={filterCode}
+            onChange={setFilterCode}
             options={stockList.map(stock => ({
               value: stock.code,
               label: `${stock.name} (${stock.code})`,
             }))}
           />
           <Select
-            placeholder="交易类型"
+            placeholder="交易状态"
             style={{ width: 120 }}
             allowClear
-            value={filterType}
-            onChange={setFilterType}
+            value={filterStatus}
+            onChange={setFilterStatus}
             options={[
-              { value: 'buy', label: '买入' },
-              { value: 'sell', label: '卖出' },
+              { value: 'open', label: '持仓中' },
+              { value: 'closed', label: '已平仓' },
             ]}
           />
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAdd}
+            className="flex-center"
           >
-            添加交易
+            新增长线记录
           </Button>
         </Space>
       </div>
@@ -317,43 +306,48 @@ const Trade = () => {
         {stats && (
           <div className="trade-section mb_20">
             <div className="trade-section-title">交易统计</div>
-            <Row gutter={16}>
-              <Col span={6}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="总交易次数"
-                    value={Number(stats.totalTrades || 0)}
+                    title="总交易笔数"
+                    value={stats.totalTrades}
                     prefix={<BarChartOutlined />}
                   />
                 </Card>
               </Col>
-              <Col span={6}>
+              <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="买入次数"
-                    value={Number(stats.buyTrades || 0)}
+                    title="总买入金额"
+                    value={stats.totalBuyAmount}
+                    precision={2}
                     prefix={<RiseOutlined />}
-                    valueStyle={{ color: '#cf1322' }}
+                    valueStyle={{ color: '#ef4444' }}
+                    suffix="元"
                   />
                 </Card>
               </Col>
-              <Col span={6}>
+              <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="卖出次数"
-                    value={Number(stats.sellTrades || 0)}
+                    title="总卖出金额"
+                    value={stats.totalSellAmount}
+                    precision={2}
                     prefix={<FallOutlined />}
-                    valueStyle={{ color: '#3f8600' }}
+                    valueStyle={{ color: '#10b981' }}
+                    suffix="元"
                   />
                 </Card>
               </Col>
-              <Col span={6}>
+              <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
-                    title="总金额"
-                    value={Number(stats.totalAmount || 0)}
+                    title="累计盈亏"
+                    value={stats.totalProfit}
                     precision={2}
                     prefix={<DollarOutlined />}
+                    valueStyle={{ color: stats.totalProfit >= 0 ? '#ef4444' : '#10b981' }}
                     suffix="元"
                   />
                 </Card>
@@ -370,145 +364,29 @@ const Trade = () => {
             dataSource={getFilteredTradingList()}
             rowKey="id"
             loading={loading}
+            size="middle"
             pagination={{
               pageSize: 10,
               showTotal: (total) => `共 ${total} 条记录`,
               showSizeChanger: true,
               showQuickJumper: true,
             }}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1000 }}
           />
         </div>
       </div>
 
-      {/* 添加/编辑弹窗 */}
-      <Modal
-        title={editingTrading ? '编辑交易记录' : '添加交易记录'}
+      {/* 添加/编辑弹窗组件 */}
+      <TradeModal
         open={isModalVisible}
-        onOk={handleSubmit}
-        onCancel={() => {
+        onCancel={() => setIsModalVisible(false)}
+        onSuccess={() => {
           setIsModalVisible(false);
-          form.resetFields();
+          refreshData();
         }}
-        width={600}
-        okText="确定"
-        cancelText="取消"
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          autoComplete="off"
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="股票代码"
-                name="symbol"
-                rules={[{ required: true, message: '请选择或输入股票代码' }]}
-              >
-                <Select
-                  showSearch
-                  placeholder="搜索或选择股票"
-                  optionFilterProp="label"
-                  onChange={handleSymbolChange}
-                  options={stockList.map(stock => ({
-                    value: stock.code,
-                    label: `${stock.name} (${stock.code})`,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="股票名称"
-                name="name"
-                rules={[{ required: true, message: '请输入股票名称' }]}
-              >
-                <Input placeholder="选择代码后自动填充" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="交易类型"
-                name="type"
-                rules={[{ required: true, message: '请选择交易类型' }]}
-              >
-                <Select
-                  placeholder="请选择"
-                  options={[
-                    { value: 'buy', label: '买入' },
-                    { value: 'sell', label: '卖出' },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="交易时间"
-                name="tradingTime"
-                rules={[{ required: true, message: '请选择交易时间' }]}
-              >
-                <DatePicker
-                  showTime
-                  format="YYYY-MM-DD HH:mm:ss"
-                  style={{ width: '100%' }}
-                  placeholder="选择日期时间"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                label="数量(股)"
-                name="quantity"
-                rules={[
-                  { required: true, message: '请输入数量' },
-                  // { type: 'number', min: 0, message: '数量必须大于0' },
-                ]}
-              >
-                <Input type="number" placeholder="例如：100" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                label="价格"
-                name="price"
-                rules={[
-                  { required: true, message: '请输入价格' },
-                  // { type: 'number', min: 0.01, message: '价格必须大于0.01' },
-                ]}
-              >
-                <Input type="number" step="0.01" placeholder="例如：1680.50" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            label="关联交易ID"
-            name="relatedTradingId"
-            tooltip="用于关联买入和卖出交易"
-          >
-            <Input type="number" placeholder="选填" />
-          </Form.Item>
-
-          <Form.Item
-            label="备注"
-            name="remarks"
-          >
-            <Input.TextArea
-              rows={3}
-              placeholder="例如：止盈卖出"
-              maxLength={200}
-              showCount
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+        editingRecord={editingTrading}
+        stockList={stockList}
+      />
     </div>
   );
 };

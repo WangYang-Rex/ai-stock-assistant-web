@@ -1,5 +1,11 @@
 import { post } from "./fetch";
-import type { StrategySignalDto, StrategySignal } from "@/@types/strategy";
+import type {
+  StrategySignalDto,
+  StrategySignal,
+  EvaluationResult,
+  BacktestResultDto,
+} from "@/@types/strategy";
+
 // ==================== Definitions (Swagger Defined) ====================
 
 /**
@@ -87,24 +93,6 @@ export interface StrategyDetailDto {
 }
 
 /**
- * 分时K线
- */
-export interface MinuteBar {
-  /** 时间 (如 14:45) */
-  time: string;
-  /** 开盘价 */
-  open: number;
-  /** 最高价 */
-  high: number;
-  /** 最低价 */
-  low: number;
-  /** 收盘价 */
-  close: number;
-  /** 成交量 */
-  volume: number;
-}
-
-/**
  * 分页查询信号请求
  */
 export interface QuerySignalDto {
@@ -178,8 +166,34 @@ export interface GetSignalDetailRequest {
 export interface EvaluateBySymbolRequest {
   /** 股票代码 (如 588080) */
   symbol: string;
-  /** 市场代码 (1-上海, 0-深圳) */
+  /** 市场代码 (1-SH, 0-SZ) */
   market?: number;
+}
+
+/**
+ * 历史回测请求
+ */
+export interface BacktestRequest {
+  /** ETF 代码 */
+  etfCode: string;
+  /** 回测日期列表 (YYYY-MM-DD) */
+  dates: string[];
+}
+
+/**
+ * 规则趋势评估请求
+ */
+export interface EvaluateRuleTrendRequest {
+  /** 股票代码 */
+  code: string;
+}
+
+/**
+ * 批量规则趋势评估请求
+ */
+export interface EvaluateRuleTrendBatchRequest {
+  /** 股票代码列表 */
+  codes: string[];
 }
 
 // ==================== API Implementation ====================
@@ -215,10 +229,34 @@ export const strategiesApi = {
   },
 
   /**
-   * 根据股票代码自动评估尾盘策略 (POST /api/strategies/close-auction/evaluate-by-symbol)
-   * 输入股票代码，系统自动获取分时数据并进行评估
+   * 触发尾盘战法评估 (POST /api/strategies/close-auction/evaluate)
+   * 传入标的代码，系统自动同步分时数据并计算尾盘买入信号
    */
   evaluateBySymbol: (data: EvaluateBySymbolRequest): Promise<StrategySignalDto> => {
-    return post<StrategySignalDto>("/api/strategies/close-auction/evaluate-by-symbol", data);
+    return post<StrategySignalDto>("/api/strategies/close-auction/evaluate", data);
+  },
+
+  /**
+   * 尾盘共振历史回测 (POST /api/strategies/close-auction/backtest)
+   * 对指定 ETF 进行历史共振得分计算及次日收益联动分析
+   */
+  evaluateBacktest: (data: BacktestRequest): Promise<BacktestResultDto> => {
+    return post<BacktestResultDto>("/api/strategies/close-auction/backtest", data);
+  },
+
+  /**
+   * 触发规则趋势评估 (POST /api/strategies/rule-trend/evaluate)
+   * 传入股票代码，计算其趋势方向、风险状态及建议仓位动作
+   */
+  evaluateRuleTrend: (data: EvaluateRuleTrendRequest): Promise<EvaluationResult> => {
+    return post<EvaluationResult>("/api/strategies/rule-trend/evaluate", data);
+  },
+
+  /**
+   * 批量触发规则趋势评估 (POST /api/strategies/rule-trend/batch-evaluate)
+   */
+  evaluateRuleTrendBatch: (data: EvaluateRuleTrendBatchRequest): Promise<EvaluationResult[]> => {
+    return post<EvaluationResult[]>("/api/strategies/rule-trend/batch-evaluate", data);
   },
 };
+

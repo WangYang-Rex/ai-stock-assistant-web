@@ -6,7 +6,7 @@ import type { Trend } from "@/@types/trend";
 
 /**
  * 从东方财富 SDK 同步分时数据请求
- * POST /trends/sync-from-api
+ * POST /api/trends/sync-from-api
  */
 export interface SyncTrendsRequest {
   /** 股票代码（如：600519） */
@@ -19,7 +19,7 @@ export interface SyncTrendsRequest {
 
 /**
  * 获取分时数据列表请求
- * POST /trends/list
+ * POST /api/trends/list
  */
 export interface TrendListRequest {
   /** 股票代码（可选） */
@@ -38,7 +38,7 @@ export interface TrendListRequest {
 
 /**
  * 根据代码和日期范围批量删除分时数据请求
- * POST /trends/delete-range
+ * POST /api/trends/delete-range
  */
 export interface DeleteTrendRangeRequest {
   /** 股票代码 */
@@ -52,7 +52,7 @@ export interface DeleteTrendRangeRequest {
 // ==================== Response Interfaces (Swagger Defined) ====================
 
 /**
- * 同步结果响应
+ * 同步单只股票分时结果响应
  */
 export interface SyncTrendsResponseData {
   /** 已同步条数 */
@@ -61,6 +61,18 @@ export interface SyncTrendsResponseData {
   total: number;
   /** 新增加条数 */
   newAdded: number;
+}
+
+/**
+ * 同步所有股票分时结果响应
+ */
+export interface SyncAllStocksTrendsResponseData {
+  /** 成功抓取的股票数 */
+  success: number;
+  /** 抓取失败的股票数 */
+  fail: number;
+  /** 累计同步的数据条数 */
+  totalSynced: number;
 }
 
 /**
@@ -85,6 +97,14 @@ export const trendsApi = {
   },
 
   /**
+   * 同步所有股票的当日分时数据 (POST /api/trends/sync-all-stocks)
+   * 遍历数据库中的所有股票，抓取其当日分时数据并更新到本地数据库
+   */
+  syncAllStocks: (): Promise<SyncAllStocksTrendsResponseData> => {
+    return post<SyncAllStocksTrendsResponseData>("/api/trends/sync-all-stocks", {});
+  },
+
+  /**
    * 获取分时数据列表 (POST /api/trends/list)
    * 支持分页、股票代码过滤及时间范围过滤
    */
@@ -99,3 +119,4 @@ export const trendsApi = {
     return post<void>("/api/trends/delete-range", data);
   },
 };
+

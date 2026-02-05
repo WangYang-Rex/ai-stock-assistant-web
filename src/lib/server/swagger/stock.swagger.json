@@ -1,0 +1,572 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Stock API - 股票信息接口",
+    "description": "提供股票基础信息的同步、删除、查询等功能，以及 ETF 成分股管理",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/stocks/sync": {
+      "post": {
+        "tags": ["股票管理"],
+        "summary": "同步股票信息",
+        "description": "通过 API 获取股票最新信息，若数据库中不存在则新增，存在则更新",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "同步参数",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["code", "market"],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "股票代码（如 600519）",
+                  "example": "600519"
+                },
+                "market": {
+                  "type": "integer",
+                  "description": "市场代码（1-上交所、0-深交所）",
+                  "example": 1
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "同步成功",
+            "schema": {
+              "$ref": "#/definitions/SyncStockResponse"
+            }
+          },
+          "500": {
+            "description": "同步失败"
+          }
+        }
+      }
+    },
+    "/api/stocks/delete": {
+      "post": {
+        "tags": ["股票管理"],
+        "summary": "删除股票",
+        "description": "根据 ID 删除指定的股票记录",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "删除参数",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "股票 ID",
+                  "example": 1
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "schema": {
+              "$ref": "#/definitions/DeleteStockResponse"
+            }
+          },
+          "500": {
+            "description": "删除失败"
+          }
+        }
+      }
+    },
+    "/api/stocks/list": {
+      "post": {
+        "tags": ["股票查询"],
+        "summary": "获取所有股票",
+        "description": "支持按市场或市场类型筛选股票列表",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "筛选参数",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "market": {
+                  "type": "integer",
+                  "description": "市场代码（可选）",
+                  "example": 1
+                },
+                "marketType": {
+                  "type": "string",
+                  "description": "市场类型（SH/SZ，可选）",
+                  "example": "SH"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "schema": {
+              "$ref": "#/definitions/StockListResponse"
+            }
+          },
+          "500": {
+            "description": "获取失败"
+          }
+        }
+      }
+    },
+    "/api/stocks/get-by-code": {
+      "post": {
+        "tags": ["股票查询"],
+        "summary": "根据股票代码获取股票",
+        "description": "根据唯一股票代码查询股票详细信息",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "查询参数",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["code"],
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "股票代码",
+                  "example": "600519"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "schema": {
+              "$ref": "#/definitions/StockResponse"
+            }
+          },
+          "404": {
+            "description": "股票未找到"
+          },
+          "500": {
+            "description": "获取失败"
+          }
+        }
+      }
+    },
+    "/api/stocks/constituents/sync": {
+      "post": {
+        "tags": ["ETF成分股管理"],
+        "summary": "批量同步 ETF 成分股数据",
+        "description": "批量同步或覆盖特定 ETF 的成分股及权重数据",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "同步数据",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["data"],
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/EtfConstituent"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "同步成功",
+            "schema": {
+              "$ref": "#/definitions/ApiResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/stocks/constituents/list": {
+      "post": {
+        "tags": ["ETF成分股管理"],
+        "summary": "获取ETF成分股列表",
+        "description": "支持按 ETF 代码或成分股代码筛选",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "查询参数",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "etfCode": {
+                  "type": "string",
+                  "description": "ETF代码",
+                  "example": "588080"
+                },
+                "stockCode": {
+                  "type": "string",
+                  "description": "成分股代码",
+                  "example": "688981"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "schema": {
+              "$ref": "#/definitions/EtfConstituentListResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/stocks/constituents/create": {
+      "post": {
+        "tags": ["ETF成分股管理"],
+        "summary": "创建ETF成分股",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "成分股数据",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EtfConstituent"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "schema": {
+              "$ref": "#/definitions/EtfConstituentResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/stocks/constituents/update": {
+      "post": {
+        "tags": ["ETF成分股管理"],
+        "summary": "更新ETF成分股",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "更新参数",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["id", "data"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "记录 ID"
+                },
+                "data": {
+                  "$ref": "#/definitions/EtfConstituent"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "schema": {
+              "$ref": "#/definitions/EtfConstituentResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/stocks/constituents/delete": {
+      "post": {
+        "tags": ["ETF成分股管理"],
+        "summary": "删除ETF成分股",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["id"],
+              "properties": {
+                "id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Stock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "股票 ID",
+          "example": 1
+        },
+        "code": {
+          "type": "string",
+          "description": "股票代码",
+          "example": "600519"
+        },
+        "name": {
+          "type": "string",
+          "description": "股票名称",
+          "example": "贵州茅台"
+        },
+        "market": {
+          "type": "integer",
+          "description": "市场代码（1-上交所、0-深交所）",
+          "example": 1
+        },
+        "marketType": {
+          "type": "string",
+          "description": "市场类型（SH-上海、SZ-深圳）",
+          "example": "SH"
+        },
+        "price": {
+          "type": "number",
+          "description": "最新价",
+          "example": 1800.5
+        },
+        "pct": {
+          "type": "number",
+          "description": "涨跌幅(%)",
+          "example": 1.25
+        },
+        "change": {
+          "type": "number",
+          "description": "涨跌额",
+          "example": 22.5
+        },
+        "volume": {
+          "type": "integer",
+          "description": "成交量(股)",
+          "example": 1234567
+        },
+        "amount": {
+          "type": "number",
+          "description": "成交额(元)",
+          "example": 2222839545
+        },
+        "totalMarketCap": {
+          "type": "number",
+          "description": "总市值(元)",
+          "example": 2262500000000
+        },
+        "floatMarketCap": {
+          "type": "number",
+          "description": "流通市值(元)",
+          "example": 2262500000000
+        },
+        "turnover": {
+          "type": "number",
+          "description": "换手率(%)",
+          "example": 0.8
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "创建时间"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "更新时间"
+        }
+      }
+    },
+    "EtfConstituent": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer" },
+        "etfCode": { "type": "string", "example": "588080" },
+        "stockCode": { "type": "string", "example": "688981" },
+        "stockName": { "type": "string", "example": "中芯国际" },
+        "weight": { "type": "number", "example": 0.085 },
+        "rank": { "type": "integer", "example": 1 },
+        "effectiveDate": { "type": "string", "format": "date", "example": "2024-01-01" },
+        "expireDate": { "type": "string", "format": "date", "example": null }
+      }
+    },
+    "ApiResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "响应消息",
+          "example": "操作成功"
+        },
+        "result": {
+          "type": "integer",
+          "description": "状态码（100 表示成功）",
+          "example": 100
+        },
+        "success": {
+          "type": "boolean",
+          "description": "是否成功",
+          "example": true
+        }
+      }
+    },
+    "StockResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ApiResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/definitions/Stock"
+            }
+          }
+        }
+      ]
+    },
+    "StockListResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ApiResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Stock"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "SyncStockResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ApiResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "properties": {
+                "stock": {
+                  "$ref": "#/definitions/Stock"
+                },
+                "isNew": {
+                  "type": "boolean",
+                  "description": "是否为新新增的股票",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "DeleteStockResponse": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ApiResponse"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "description": "是否删除成功",
+                  "example": true
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "EtfConstituentResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/ApiResponse" },
+        {
+          "type": "object",
+          "properties": {
+            "data": { "$ref": "#/definitions/EtfConstituent" }
+          }
+        }
+      ]
+    },
+    "EtfConstituentListResponse": {
+      "allOf": [
+        { "$ref": "#/definitions/ApiResponse" },
+        {
+          "type": "object",
+          "properties": {
+            "data": {
+              "type": "array",
+              "items": { "$ref": "#/definitions/EtfConstituent" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

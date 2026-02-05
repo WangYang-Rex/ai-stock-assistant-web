@@ -1,5 +1,5 @@
 import { post } from "./fetch";
-import type { Stock } from "@/@types/stock";
+import type { Stock, EtfConstituent } from "@/@types/stock";
 
 // ==================== Request Interfaces (Swagger Defined) ====================
 
@@ -43,6 +43,46 @@ export interface GetStockByCodeRequest {
   code: string;
 }
 
+/**
+ * 批量同步 ETF 成分股请求
+ * POST /stocks/constituents/sync
+ */
+export interface EtfConstituentSyncRequest {
+  /** 成分股数据列表 */
+  data: EtfConstituent[];
+}
+
+/**
+ * 获取 ETF 成分股列表请求
+ * POST /stocks/constituents/list
+ */
+export interface EtfConstituentListRequest {
+  /** ETF 代码 */
+  etfCode?: string;
+  /** 成分股代码 */
+  stockCode?: string;
+}
+
+/**
+ * 更新 ETF 成分股请求
+ * POST /stocks/constituents/update
+ */
+export interface EtfConstituentUpdateRequest {
+  /** 记录 ID */
+  id: number;
+  /** 更新的数据 */
+  data: Partial<EtfConstituent>;
+}
+
+/**
+ * 删除 ETF 成分股请求
+ * POST /stocks/constituents/delete
+ */
+export interface EtfConstituentDeleteRequest {
+  /** 记录 ID */
+  id: number;
+}
+
 // ==================== Response Interfaces (Swagger Defined) ====================
 
 /**
@@ -60,6 +100,14 @@ export interface SyncStockResponseData {
  */
 export interface DeleteStockResponseData {
   /** 是否删除成功 */
+  success: boolean;
+}
+
+/**
+ * 通用成功响应数据 (包含 success 字段)
+ */
+export interface GenericSuccessResponseData {
+  /** 是否成功 */
   success: boolean;
 }
 
@@ -96,5 +144,44 @@ export const stockApi = {
    */
   delete: (data: DeleteStockRequest): Promise<DeleteStockResponseData> => {
     return post<DeleteStockResponseData>("/api/stocks/delete", data);
+  },
+
+  // ==================== ETF 成分股管理 ====================
+
+  /**
+   * 批量同步 ETF 成分股数据 (POST /api/stocks/constituents/sync)
+   * 批量同步或覆盖特定 ETF 的成分股及权重数据
+   */
+  syncConstituents: (data: EtfConstituentSyncRequest): Promise<void> => {
+    return post<void>("/api/stocks/constituents/sync", data);
+  },
+
+  /**
+   * 获取 ETF 成分股列表 (POST /api/stocks/constituents/list)
+   * 支持按 ETF 代码或成分股代码筛选
+   */
+  listConstituents: (data?: EtfConstituentListRequest): Promise<EtfConstituent[]> => {
+    return post<EtfConstituent[]>("/api/stocks/constituents/list", data || {});
+  },
+
+  /**
+   * 创建 ETF 成分股 (POST /api/stocks/constituents/create)
+   */
+  createConstituent: (data: Omit<EtfConstituent, 'id'>): Promise<EtfConstituent> => {
+    return post<EtfConstituent>("/api/stocks/constituents/create", data);
+  },
+
+  /**
+   * 更新 ETF 成分股 (POST /api/stocks/constituents/update)
+   */
+  updateConstituent: (data: EtfConstituentUpdateRequest): Promise<EtfConstituent> => {
+    return post<EtfConstituent>("/api/stocks/constituents/update", data);
+  },
+
+  /**
+   * 删除 ETF 成分股 (POST /api/stocks/constituents/delete)
+   */
+  deleteConstituent: (data: EtfConstituentDeleteRequest): Promise<GenericSuccessResponseData> => {
+    return post<GenericSuccessResponseData>("/api/stocks/constituents/delete", data);
   },
 };

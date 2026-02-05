@@ -167,7 +167,7 @@ const Trade = () => {
           width: 100,
           render: (value: any) => {
             const num = Number(value);
-            return !isNaN(num) && value !== null && value !== undefined ? `¥${num.toFixed(2)}` : '-';
+            return !isNaN(num) && value !== null && value !== undefined ? `¥${num.toFixed(3)}` : '-';
           },
         },
         {
@@ -195,9 +195,11 @@ const Trade = () => {
           dataIndex: 'sell_price',
           key: 'sell_price',
           width: 100,
-          render: (value: any) => {
+          render: (value: any, record: Trading) => {
+            // 如果卖出价格为空，则显示预计卖出价格 = 买入价格 * 1.02
+            const expectedSellPrice = Number(record.buy_price || 0) * 1.02;
             const num = Number(value);
-            return !isNaN(num) && value !== null && value !== undefined ? `¥${num.toFixed(2)}` : '-';
+            return !isNaN(num) && value !== null && value !== undefined ? `¥${num.toFixed(3)}` : `预计卖出价¥${expectedSellPrice.toFixed(3)}`;
           },
         },
         {
@@ -222,8 +224,8 @@ const Trade = () => {
         const color = profit >= 0 ? '#ef4444' : '#10b981';
         return (
           <div style={{ color, fontWeight: 500 }}>
-            <div>{profit >= 0 ? '+' : ''}{Number(profit).toFixed(2)}</div>
-            <div style={{ fontSize: '12px' }}>{profit >= 0 ? '+' : ''}{Number(profitRate).toFixed(2)}%</div>
+            <div>{profit >= 0 ? '+' : ''}{Number(profit).toFixed(3)}</div>
+            <div style={{ fontSize: '12px' }}>{profit >= 0 ? '+' : ''}{Number(profitRate).toFixed(3)}%</div>
           </div>
         );
       },

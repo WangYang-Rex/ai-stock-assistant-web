@@ -198,11 +198,20 @@ export interface PerformanceDto {
 /**
  * 历史回测单日详情
  */
+/** 与实盘 evaluateCloseAuctionStrategy 一致；无当日 ETF 分时则为 null */
+export interface CloseAuctionSignalSnapshotDto {
+  allow: boolean;
+  confidence: number;
+  reasons: string[];
+}
+
 export interface BacktestDayDetailDto {
   /** 日期 */
   date?: string;
   /** 共振得分 */
   resonance?: ResonanceScoreDto;
+  /** 尾盘战法快照；库中无分时则为 null */
+  closeAuction?: CloseAuctionSignalSnapshotDto | null;
   /** 后续表现 */
   performance?: PerformanceDto;
 }
@@ -229,6 +238,10 @@ export interface BacktestResultDto {
   avgOpenReturn?: number;
   /** 平均次日盘中最高收益率 */
   avgMaxReturn?: number;
+  /** 有 ETF 分时并成功评估 CLOSE_AUCTION_T1 的交易日数 */
+  closeAuctionEvaluatedDays?: number;
+  /** 其中 allow 为 true 的天数 */
+  closeAuctionAllowDays?: number;
   /** 详细每日列表 */
   details?: BacktestDayDetailDto[];
 }

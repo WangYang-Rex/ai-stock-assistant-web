@@ -7,4 +7,5 @@
 export { default as IntradayChart } from './IntradayChart';
 export { default as FiveDayChart } from './FiveDayChart';
 export { default as CandlestickChart } from './CandlestickChart';
+export { default as MinuteBarChart } from './MinuteBarChart';
 export * from './chartConfig';

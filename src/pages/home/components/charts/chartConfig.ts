@@ -158,9 +158,9 @@ export const getBaseTooltipConfig = () => ({
  */
 export const getDualGridConfig = () => ([
   {
-    left: '3%',
-    right: '3%',
-    top: '2%',
+    left: '1%',
+    right: '1%',
+    top: '1%',
     height: '65%',
     containLabel: false,
     show: true,
@@ -168,8 +168,8 @@ export const getDualGridConfig = () => ([
     backgroundColor: 'transparent'
   },
   {
-    left: '3%',
-    right: '3%',
+    left: '1%',
+    right: '1%',
     top: '72%',
     height: '20%',
     containLabel: false,

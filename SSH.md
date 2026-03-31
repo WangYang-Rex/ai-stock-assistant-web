@@ -21,3 +21,9 @@ rm -r /usr/code/ai-stock-assistant-web/dist
 ```bash
 scp -r /Users/wangyang/project/ai-stock-assistant/ai-stock-assistant-web/dist root@114.55.173.101:/usr/code/ai-stock-assistant-web/
 ```
+
+### 将服务器上的git文件修改 重置
+```bash
+cd /usr/code/ai-stock-assistant-web
+git reset --hard origin/master
+```

@@ -117,13 +117,13 @@ const StrategySignalPage: React.FC = () => {
         'STOP': { text: '触发止损', color: '#f5222d', status: 'error' },
         'NONE': { text: '暂无动作', color: '#d9d9d9', status: 'default' },
       };
-      return actionMap[decision.action as string] || (signal.allow === 1 ? { text: '允许买入', color: '#52c41a', status: 'success' } : { text: '观望拒绝', color: '#d9d9d9', status: 'default' });
+      return actionMap[decision.action as string] || (signal.allow === 1 ? { text: '允许买入', color: '#52c41a', status: 'success' } : { text: '保持观望', color: '#d9d9d9', status: 'default' });
     }
     
     // 兜底逻辑
     return signal.allow === 1 
       ? { text: '建议买入', color: '#52c41a', status: 'success' as const } 
-      : { text: '观望拒绝', color: '#d9d9d9', status: 'default' as const };
+      : { text: '保持观望', color: '#d9d9d9', status: 'default' as const };
   };
 
   const renderSignalCard = (signal: StrategySignal) => {

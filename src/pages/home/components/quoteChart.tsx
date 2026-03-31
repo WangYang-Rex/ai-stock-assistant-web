@@ -2,7 +2,7 @@
  * ============================================
  * QuoteChart - 行情图表容器组件
  * ============================================
- * 统一管理分时图、5日图、日K三种图表类型
+ * 统一管理分时图、5日图、日K、分钟线四种图表类型
  * 每个图表组件自治管理自己的数据加载
  */
 
@@ -11,10 +11,11 @@ import { Button, Radio, message } from 'antd';
 import type { Stock } from '@/@types/stock';
 import { trendsApi } from '@/lib/server/trendsApi';
 import { klinesApi } from '@/lib/server/klineApi';
-import { IntradayChart, FiveDayChart, CandlestickChart } from './charts';
+import { minuteBarApi } from '@/lib/server/minuteBarApi';
+import { IntradayChart, FiveDayChart, CandlestickChart, MinuteBarChart } from './charts';
 
 // 图表类型
-type ChartType = 'todayK' | 'fiveDaysK' | 'dailyK';
+type ChartType = 'todayK' | 'fiveDaysK' | 'dailyK' | 'minuteK';
 
 interface QuoteChartProps {
   stock: Stock;
@@ -32,19 +33,31 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
   // 同步数据核心逻辑
   const syncData = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
-    if (chartType === 'todayK' || chartType === 'fiveDaysK') {
-      await trendsApi.syncFromApi({
-        code: stock.code,
-        market: Number(stock.market) || 1,
-        ndays: chartType === 'todayK' ? 1 : 5
-      });
-    } else {
-      await klinesApi.sync({
-        code: stock.code,
-        period: 'daily'
-      });
+    try {
+      if (chartType === 'todayK' || chartType === 'fiveDaysK') {
+        await trendsApi.syncFromApi({
+          code: stock.code,
+          market: Number(stock.market) || 1,
+          ndays: chartType === 'todayK' ? 1 : 5
+        });
+      } else if (chartType === 'dailyK') {
+        await klinesApi.sync({
+          code: stock.code,
+          period: 'daily'
+        });
+      } else if (chartType === 'minuteK') {
+        await minuteBarApi.syncFromApi({
+          code: stock.code,
+          market: Number(stock.market) || 1
+        });
+      }
+      setRefreshKey(Date.now().toString());
+    } catch (error) {
+      console.error('syncData failed:', error);
+      message.error('同步数据失败');
+    } finally {
+      if (!isSilent) setLoading(false);
     }
-    setRefreshKey(Date.now().toString());
   }, [stock.code, stock.market, chartType]);
 
   // 定时刷新逻辑 (仅在分时图模式下生效)
@@ -68,6 +81,13 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
     };
   }, [chartType, syncData]);
 
+  // 自动同步逻辑 - 当切换到分钟视图或更换股票时，自动触发一次同步
+  useEffect(() => {
+    if (chartType === 'minuteK') {
+      syncData();
+    }
+  }, [chartType, stock.code, syncData]);
+
   // 切换图表类型
   const handleTypeChange = (type: ChartType) => {
     setChartType(type);
@@ -82,6 +102,8 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
         return <FiveDayChart stock={stock} />;
       case 'dailyK':
         return <CandlestickChart stock={stock} />;
+      case 'minuteK':
+        return <MinuteBarChart stock={stock} />;
       default:
         return <IntradayChart stock={stock} />;
     }
@@ -97,7 +119,7 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
       {/* 工具栏 */}
       <div className="mb_12 t-FBH">
         <Radio.Group
-          style={{ width: '300px' }}
+          style={{ width: '400px' }}
           optionType="button"
           value={chartType}
           onChange={(e) => handleTypeChange(e.target.value)}
@@ -105,6 +127,7 @@ const QuoteChart: React.FC<QuoteChartProps> = ({ stock }) => {
             { label: '分时', value: 'todayK' },
             { label: '5日', value: 'fiveDaysK' },
             { label: '日K', value: 'dailyK' },
+            { label: '分钟', value: 'minuteK' },
           ]}
         />
         <div className="t-FB1" />

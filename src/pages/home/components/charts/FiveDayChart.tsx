@@ -200,10 +200,20 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ stock }) => {
           position: 'left',
           min: yAxisMin,
           max: yAxisMax,
-          splitNumber: 4,
-          axisLabel: { fontSize: 11, color: CHART_COLORS.text, formatter: (v: number) => v.toFixed(2), margin: 8 },
+          interval: yAxisMax - previousClose,
+          splitNumber: 2,
+          axisLabel: {
+            inside: true,
+            fontSize: 10,
+            color: CHART_COLORS.text,
+            formatter: (v: number) => v.toFixed(2), 
+            margin: 0,
+            padding: [0, 0, 2, 4],
+            verticalAlign: 'bottom'
+          },
           axisLine: { show: false },
           axisTick: { show: false },
+          z: 10,
           splitLine: { show: true, lineStyle: { color: CHART_COLORS.grid, type: 'dashed' } }
         },
         {
@@ -212,8 +222,10 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ stock }) => {
           position: 'right',
           min: yAxisMin,
           max: yAxisMax,
-          splitNumber: 4,
+          interval: yAxisMax - previousClose,
+          splitNumber: 2,
           axisLabel: {
+            inside: true, 
             fontSize: 11,
             color: (value: number) => {
               const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
@@ -223,8 +235,11 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ stock }) => {
               const pct = previousClose ? ((value - previousClose) / previousClose) * 100 : 0;
               return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
             },
-            margin: 8
+            margin: 0,
+            padding: [0, 4, 2, 0],
+            verticalAlign: 'bottom'
           },
+          z: 10,
           axisLine: { show: false },
           axisTick: { show: false },
           splitLine: { show: false }
@@ -260,12 +275,12 @@ const FiveDayChart: React.FC<FiveDayChartProps> = ({ stock }) => {
               ]
             }
           },
-          markLine: {
-            symbol: 'none',
-            silent: true,
-            label: { show: true, position: 'insideEndTop', formatter: `基准 ${previousClose.toFixed(2)}`, fontSize: 11, color: CHART_COLORS.flat },
-            data: [{ yAxis: previousClose, lineStyle: { color: CHART_COLORS.flat, type: 'dashed', width: 1, opacity: 0.6 } }]
-          }
+          // markLine: {
+          //   symbol: 'none',
+          //   silent: true,
+          //   label: { show: true, position: 'insideEndTop', formatter: `基准 ${previousClose.toFixed(2)}`, fontSize: 11, color: CHART_COLORS.flat },
+          //   data: [{ yAxis: previousClose, lineStyle: { color: CHART_COLORS.flat, type: 'dashed', width: 1, opacity: 0.6 } }]
+          // }
         },
         {
           name: '成交量',
